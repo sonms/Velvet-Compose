@@ -3,14 +3,18 @@ package com.sonms.wheelpicker
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
@@ -190,11 +194,50 @@ internal fun <T> WheelPickerImpl(
                 )
         )
 
+        if (style.selector.showDivider) {
+            if (orientation == WheelPickerOrientation.Vertical) {
+                HorizontalDivider(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.Center)
+                        .offset(y = -(itemSize / 2)),
+                    thickness = style.selector.dividerThickness,
+                    color = style.selector.dividerColor,
+                )
+
+                HorizontalDivider(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.Center)
+                        .offset(y = itemSize / 2),
+                    thickness = style.selector.dividerThickness,
+                    color = style.selector.dividerColor,
+                )
+            } else {
+                VerticalDivider(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .align(Alignment.Center)
+                        .offset(x = -(itemSize / 2)),
+                    thickness = style.selector.dividerThickness,
+                    color = style.selector.dividerColor,
+                )
+
+                VerticalDivider(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .align(Alignment.Center)
+                        .offset(x = itemSize / 2),
+                    thickness = style.selector.dividerThickness,
+                    color = style.selector.dividerColor,
+                )
+            }
+        }
+
         val pagerModifier = Modifier
             .fillMaxSize()
             .fadingEdge(
                 isVertical = orientation == WheelPickerOrientation.Vertical,
-                color = style.fade.color,
                 fraction = style.fade.fraction,
                 enabled = style.fade.enabled,
             )
@@ -274,10 +317,15 @@ private fun WheelPickerItem(
 
                 val transform = style.transform
                 if (transform.rotationEnabled) {
-                    if (orientation == WheelPickerOrientation.Vertical)
-                        rotationX = pageOffset * transform.maxRotationDegree
-                    else
-                        rotationY = pageOffset * transform.maxRotationDegree
+                    val clampedOffset = pageOffset.coerceIn(-3f, 3f)
+
+                    if (orientation == WheelPickerOrientation.Vertical) {
+                        rotationX = clampedOffset * transform.maxRotationDegree
+                        translationY = pageOffset * (itemSize.toPx() * 0.25f)
+                    } else {
+                        rotationY = clampedOffset * transform.maxRotationDegree
+                        translationX = pageOffset * (itemSize.toPx() * 0.25f)
+                    }
                 }
                 if (transform.scaleEnabled) {
                     val scale = (1f - (pageOffset.absoluteValue * (1f - transform.minScale)))
