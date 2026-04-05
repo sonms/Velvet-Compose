@@ -1,0 +1,47 @@
+$dokka.format:html-v1
+$dokka.linkExtension:html
+$dokka.location:com.sonms.wheelpicker.state////PointingToDeclaration/wheelpicker/com.sonms.wheelpicker.state/index.html
+$dokka.location:com.sonms.wheelpicker.state//rememberWheelPickerState/#kotlin.Int/PointingToDeclaration/wheelpicker/com.sonms.wheelpicker.state/remember-wheel-picker-state.html
+$dokka.location:com.sonms.wheelpicker.state/WheelPickerState///PointingToDeclaration/wheelpicker/com.sonms.wheelpicker.state/-wheel-picker-state/index.html
+$dokka.location:com.sonms.wheelpicker.state/WheelPickerState/WheelPickerState/#kotlin.Int/PointingToDeclaration/wheelpicker/com.sonms.wheelpicker.state/-wheel-picker-state/-wheel-picker-state.html
+$dokka.location:com.sonms.wheelpicker.state/WheelPickerState/animateScrollToIndex/#kotlin.Int/PointingToDeclaration/wheelpicker/com.sonms.wheelpicker.state/-wheel-picker-state/animate-scroll-to-index.html
+$dokka.location:com.sonms.wheelpicker.state/WheelPickerState/currentIndex/#/PointingToDeclaration/wheelpicker/com.sonms.wheelpicker.state/-wheel-picker-state/current-index.html
+$dokka.location:com.sonms.wheelpicker.state/WheelPickerState/initialIndex/#/PointingToDeclaration/wheelpicker/com.sonms.wheelpicker.state/-wheel-picker-state/initial-index.html
+$dokka.location:com.sonms.wheelpicker.state/WheelPickerState/isScrollInProgress/#/PointingToDeclaration/wheelpicker/com.sonms.wheelpicker.state/-wheel-picker-state/is-scroll-in-progress.html
+$dokka.location:com.sonms.wheelpicker.state/WheelPickerState/scrollToIndex/#kotlin.Int/PointingToDeclaration/wheelpicker/com.sonms.wheelpicker.state/-wheel-picker-state/scroll-to-index.html
+$dokka.location:com.sonms.wheelpicker.style////PointingToDeclaration/wheelpicker/com.sonms.wheelpicker.style/index.html
+$dokka.location:com.sonms.wheelpicker.style/WheelPickerDefaults///PointingToDeclaration/wheelpicker/com.sonms.wheelpicker.style/-wheel-picker-defaults/index.html
+$dokka.location:com.sonms.wheelpicker.style/WheelPickerDefaults/fadeStyle/#kotlin.Float#kotlin.Boolean/PointingToDeclaration/wheelpicker/com.sonms.wheelpicker.style/-wheel-picker-defaults/fade-style.html
+$dokka.location:com.sonms.wheelpicker.style/WheelPickerDefaults/selectorStyle/#androidx.compose.ui.graphics.Color#androidx.compose.ui.graphics.Shape#androidx.compose.ui.graphics.Color#androidx.compose.ui.unit.Dp#kotlin.Boolean/PointingToDeclaration/wheelpicker/com.sonms.wheelpicker.style/-wheel-picker-defaults/selector-style.html
+$dokka.location:com.sonms.wheelpicker.style/WheelPickerDefaults/style/#com.sonms.wheelpicker.style.WheelPickerSelectorStyle#com.sonms.wheelpicker.style.WheelPickerFadeStyle#com.sonms.wheelpicker.style.WheelPickerTransformStyle/PointingToDeclaration/wheelpicker/com.sonms.wheelpicker.style/-wheel-picker-defaults/style.html
+$dokka.location:com.sonms.wheelpicker.style/WheelPickerDefaults/transformStyle/#kotlin.Boolean#kotlin.Float#kotlin.Boolean#kotlin.Float#kotlin.Boolean#kotlin.Float/PointingToDeclaration/wheelpicker/com.sonms.wheelpicker.style/-wheel-picker-defaults/transform-style.html
+$dokka.location:com.sonms.wheelpicker.style/WheelPickerFadeStyle///PointingToDeclaration/wheelpicker/com.sonms.wheelpicker.style/-wheel-picker-fade-style/index.html
+$dokka.location:com.sonms.wheelpicker.style/WheelPickerFadeStyle/WheelPickerFadeStyle/#kotlin.Float#kotlin.Boolean/PointingToDeclaration/wheelpicker/com.sonms.wheelpicker.style/-wheel-picker-fade-style/-wheel-picker-fade-style.html
+$dokka.location:com.sonms.wheelpicker.style/WheelPickerFadeStyle/enabled/#/PointingToDeclaration/wheelpicker/com.sonms.wheelpicker.style/-wheel-picker-fade-style/enabled.html
+$dokka.location:com.sonms.wheelpicker.style/WheelPickerFadeStyle/fraction/#/PointingToDeclaration/wheelpicker/com.sonms.wheelpicker.style/-wheel-picker-fade-style/fraction.html
+$dokka.location:com.sonms.wheelpicker.style/WheelPickerSelectorStyle///PointingToDeclaration/wheelpicker/com.sonms.wheelpicker.style/-wheel-picker-selector-style/index.html
+$dokka.location:com.sonms.wheelpicker.style/WheelPickerSelectorStyle/WheelPickerSelectorStyle/#androidx.compose.ui.graphics.Color#androidx.compose.ui.graphics.Shape#androidx.compose.ui.graphics.Color#androidx.compose.ui.unit.Dp#kotlin.Boolean/PointingToDeclaration/wheelpicker/com.sonms.wheelpicker.style/-wheel-picker-selector-style/-wheel-picker-selector-style.html
+$dokka.location:com.sonms.wheelpicker.style/WheelPickerSelectorStyle/background/#/PointingToDeclaration/wheelpicker/com.sonms.wheelpicker.style/-wheel-picker-selector-style/background.html
+$dokka.location:com.sonms.wheelpicker.style/WheelPickerSelectorStyle/dividerColor/#/PointingToDeclaration/wheelpicker/com.sonms.wheelpicker.style/-wheel-picker-selector-style/divider-color.html
+$dokka.location:com.sonms.wheelpicker.style/WheelPickerSelectorStyle/dividerThickness/#/PointingToDeclaration/wheelpicker/com.sonms.wheelpicker.style/-wheel-picker-selector-style/divider-thickness.html
+$dokka.location:com.sonms.wheelpicker.style/WheelPickerSelectorStyle/shape/#/PointingToDeclaration/wheelpicker/com.sonms.wheelpicker.style/-wheel-picker-selector-style/shape.html
+$dokka.location:com.sonms.wheelpicker.style/WheelPickerSelectorStyle/showDivider/#/PointingToDeclaration/wheelpicker/com.sonms.wheelpicker.style/-wheel-picker-selector-style/show-divider.html
+$dokka.location:com.sonms.wheelpicker.style/WheelPickerStyle///PointingToDeclaration/wheelpicker/com.sonms.wheelpicker.style/-wheel-picker-style/index.html
+$dokka.location:com.sonms.wheelpicker.style/WheelPickerStyle/WheelPickerStyle/#com.sonms.wheelpicker.style.WheelPickerSelectorStyle#com.sonms.wheelpicker.style.WheelPickerFadeStyle#com.sonms.wheelpicker.style.WheelPickerTransformStyle/PointingToDeclaration/wheelpicker/com.sonms.wheelpicker.style/-wheel-picker-style/-wheel-picker-style.html
+$dokka.location:com.sonms.wheelpicker.style/WheelPickerStyle/fade/#/PointingToDeclaration/wheelpicker/com.sonms.wheelpicker.style/-wheel-picker-style/fade.html
+$dokka.location:com.sonms.wheelpicker.style/WheelPickerStyle/selector/#/PointingToDeclaration/wheelpicker/com.sonms.wheelpicker.style/-wheel-picker-style/selector.html
+$dokka.location:com.sonms.wheelpicker.style/WheelPickerStyle/transform/#/PointingToDeclaration/wheelpicker/com.sonms.wheelpicker.style/-wheel-picker-style/transform.html
+$dokka.location:com.sonms.wheelpicker.style/WheelPickerTransformStyle///PointingToDeclaration/wheelpicker/com.sonms.wheelpicker.style/-wheel-picker-transform-style/index.html
+$dokka.location:com.sonms.wheelpicker.style/WheelPickerTransformStyle/WheelPickerTransformStyle/#kotlin.Boolean#kotlin.Float#kotlin.Boolean#kotlin.Float#kotlin.Boolean#kotlin.Float/PointingToDeclaration/wheelpicker/com.sonms.wheelpicker.style/-wheel-picker-transform-style/-wheel-picker-transform-style.html
+$dokka.location:com.sonms.wheelpicker.style/WheelPickerTransformStyle/alphaEnabled/#/PointingToDeclaration/wheelpicker/com.sonms.wheelpicker.style/-wheel-picker-transform-style/alpha-enabled.html
+$dokka.location:com.sonms.wheelpicker.style/WheelPickerTransformStyle/maxRotationDegree/#/PointingToDeclaration/wheelpicker/com.sonms.wheelpicker.style/-wheel-picker-transform-style/max-rotation-degree.html
+$dokka.location:com.sonms.wheelpicker.style/WheelPickerTransformStyle/minAlpha/#/PointingToDeclaration/wheelpicker/com.sonms.wheelpicker.style/-wheel-picker-transform-style/min-alpha.html
+$dokka.location:com.sonms.wheelpicker.style/WheelPickerTransformStyle/minScale/#/PointingToDeclaration/wheelpicker/com.sonms.wheelpicker.style/-wheel-picker-transform-style/min-scale.html
+$dokka.location:com.sonms.wheelpicker.style/WheelPickerTransformStyle/rotationEnabled/#/PointingToDeclaration/wheelpicker/com.sonms.wheelpicker.style/-wheel-picker-transform-style/rotation-enabled.html
+$dokka.location:com.sonms.wheelpicker.style/WheelPickerTransformStyle/scaleEnabled/#/PointingToDeclaration/wheelpicker/com.sonms.wheelpicker.style/-wheel-picker-transform-style/scale-enabled.html
+$dokka.location:com.sonms.wheelpicker////PointingToDeclaration/wheelpicker/com.sonms.wheelpicker/index.html
+$dokka.location:com.sonms.wheelpicker//HorizontalWheelPicker/#kotlin.collections.List[TypeParam(bounds=[kotlin.Any?])]#androidx.compose.ui.Modifier#com.sonms.wheelpicker.state.WheelPickerState#androidx.compose.ui.unit.Dp#kotlin.Int#kotlin.Boolean#com.sonms.wheelpicker.style.WheelPickerStyle#kotlin.Function2[kotlin.Int,TypeParam(bounds=[kotlin.Any?]),kotlin.Unit]#kotlin.Function2[TypeParam(bounds=[kotlin.Any?]),kotlin.Boolean,kotlin.Unit]/PointingToDeclaration/wheelpicker/com.sonms.wheelpicker/-horizontal-wheel-picker.html
+$dokka.location:com.sonms.wheelpicker//VerticalWheelPicker/#kotlin.collections.List[TypeParam(bounds=[kotlin.Any?])]#androidx.compose.ui.Modifier#com.sonms.wheelpicker.state.WheelPickerState#androidx.compose.ui.unit.Dp#kotlin.Int#kotlin.Boolean#com.sonms.wheelpicker.style.WheelPickerStyle#kotlin.Function2[kotlin.Int,TypeParam(bounds=[kotlin.Any?]),kotlin.Unit]#kotlin.Function2[TypeParam(bounds=[kotlin.Any?]),kotlin.Boolean,kotlin.Unit]/PointingToDeclaration/wheelpicker/com.sonms.wheelpicker/-vertical-wheel-picker.html
+com.sonms.wheelpicker
+com.sonms.wheelpicker.state
+com.sonms.wheelpicker.style
