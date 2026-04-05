@@ -22,7 +22,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Generate Dokka HTML
-        run: ./gradlew :wheelpicker:dokkaHtml --no-configuration-cache
+        run: ./gradlew :wheelpicker:dokkaGeneratePublicationHtml --no-configuration-cache
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4

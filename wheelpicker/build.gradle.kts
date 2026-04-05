@@ -48,11 +48,9 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
 }
 
-tasks.dokkaHtml.configure {
-    dokkaSourceSets {
-        named("main") {
-            noAndroidSdkLink.set(false)
-        }
+dokka {
+    dokkaSourceSets.main {
+        enableAndroidDocumentationLink.set(false)
     }
 }
 
