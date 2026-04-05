@@ -8,6 +8,7 @@ build/
 
 # Local configuration file (sdk path, etc)
 local.properties
+gradle.properties
 
 # Log/OS Files
 *.log
@@ -159,6 +160,7 @@ proguard/
 # Android Studio
 /*/build/
 /*/local.properties
+/*/gradle.properties
 /*/out
 /*/*/build
 /*/*/production

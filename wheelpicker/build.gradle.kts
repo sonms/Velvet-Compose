@@ -48,6 +48,14 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
 }
 
+tasks.dokkaHtml.configure {
+    dokkaSourceSets {
+        named("main") {
+            noAndroidSdkLink.set(false)
+        }
+    }
+}
+
 val velvetVersion = "0.0.1"
 
 mavenPublishing {
