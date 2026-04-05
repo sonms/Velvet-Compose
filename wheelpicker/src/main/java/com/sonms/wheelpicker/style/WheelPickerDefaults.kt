@@ -67,11 +67,9 @@ object WheelPickerDefaults {
      */
     @Composable
     fun fadeStyle(
-        color: Color = MaterialTheme.colorScheme.surface,
         fraction: Float = 0.3f,
         enabled: Boolean = true,
     ): WheelPickerFadeStyle = WheelPickerFadeStyle(
-        color = color,
         fraction = fraction,
         enabled = enabled,
     )
@@ -90,7 +88,7 @@ object WheelPickerDefaults {
     @Composable
     fun transformStyle(
         rotationEnabled: Boolean = true,
-        maxRotationDegree: Float = 30f,
+        maxRotationDegree: Float = 20f,
         scaleEnabled: Boolean = true,
         minScale: Float = 0.85f,
         alphaEnabled: Boolean = true,
