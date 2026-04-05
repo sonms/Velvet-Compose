@@ -21,4 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "VelvetCompose"
 include(":app")
- 
+include(":wheelpicker")
