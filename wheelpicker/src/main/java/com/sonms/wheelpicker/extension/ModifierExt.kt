@@ -14,8 +14,6 @@ import androidx.compose.ui.graphics.graphicsLayer
  *
  * @param isVertical 페이드 엣지가 수직 방향인지 여부.
  *                   Whether the fading edge is vertical.
- * @param color 페이드 엣지의 색상.
- *               The color of the fading edge.
  * @param fraction 페이드 엣지의 농도.
  *                  The fraction of the fading edge.
  * @param enabled 페이드 엣지의 활성화 여부.
@@ -23,7 +21,6 @@ import androidx.compose.ui.graphics.graphicsLayer
  */
 internal fun Modifier.fadingEdge(
     isVertical: Boolean,
-    color: Color,
     fraction: Float,
     enabled: Boolean,
 ): Modifier {
@@ -31,37 +28,25 @@ internal fun Modifier.fadingEdge(
     return this
         .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
         .drawWithCache {
-            val startBrush: Brush
-            val endBrush: Brush
-
-            if (isVertical) {
-                startBrush = Brush.verticalGradient(
-                    colors = listOf(color, Color.Transparent),
-                    startY = 0f,
-                    endY = size.height * fraction,
-                )
-                endBrush = Brush.verticalGradient(
-                    colors = listOf(Color.Transparent, color),
-                    startY = size.height * (1f - fraction),
-                    endY = size.height,
+            val maskBrush = if (isVertical) {
+                Brush.verticalGradient(
+                    0f to Color.Transparent,
+                    fraction to Color.Black,
+                    (1f - fraction) to Color.Black,
+                    1f to Color.Transparent
                 )
             } else {
-                startBrush = Brush.horizontalGradient(
-                    colors = listOf(color, Color.Transparent),
-                    startX = 0f,
-                    endX = size.width * fraction,
-                )
-                endBrush = Brush.horizontalGradient(
-                    colors = listOf(Color.Transparent, color),
-                    startX = size.width * (1f - fraction),
-                    endX = size.width,
+                Brush.horizontalGradient(
+                    0f to Color.Transparent,
+                    fraction to Color.Black,
+                    (1f - fraction) to Color.Black,
+                    1f to Color.Transparent
                 )
             }
 
             onDrawWithContent {
                 drawContent()
-                drawRect(brush = startBrush, blendMode = BlendMode.DstIn)
-                drawRect(brush = endBrush, blendMode = BlendMode.DstIn)
+                drawRect(brush = maskBrush, blendMode = BlendMode.DstIn)
             }
         }
 }
