@@ -9,23 +9,23 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 [![API](https://img.shields.io/badge/API-24%2B-brightgreen.svg)](https://android-arsenal.com/api?level=24)
 
-Bring the classic iOS 3D wheel picker to your Jetpack Compose app.  
-Supports infinite scrolling, 3D graphic layers, and full style customization.
+iOS 스타일의 3D 휠 피커를 Jetpack Compose 앱에서 사용할 수 있도록 해주는 라이브러리입니다.  
+무한 스크롤, 3D 그래픽 레이어, 완전한 스타일 커스터마이징을 지원합니다.
 
 ---
 
-## 📸 Preview
+## 📸 미리보기
 
 | Vertical                                               | Horizontal                                               |
 |--------------------------------------------------------|----------------------------------------------------------|
 | <video src="assets/vertical_preview.mp4" width="200"/> | <video src="assets/horizontal_preview.mp4" width="200"/> |
 ---
 
-## 🚀 Getting Started
+## 🚀 시작하기
 
 ### Gradle
 
-Add the dependency to your `build.gradle.kts`:
+`build.gradle.kts`에 의존성을 추가하세요:
 
 ```kotlin
 dependencies {
@@ -35,9 +35,9 @@ dependencies {
 
 ---
 
-## 📖 Usage
+## 📖 사용법
 
-### Basic Usage
+### 기본 사용법
 
 ```kotlin
 val items = remember { (1..12).map { it.toString().padStart(2, '0') } }
@@ -49,7 +49,7 @@ VerticalWheelPicker(
     visibleItemCount = 5,
     infinite = true,
     onItemSelected = { index, item ->
-        // handle selection
+        // 선택된 아이템 처리
     },
 ) { item, isSelected ->
     Text(
@@ -61,7 +61,7 @@ VerticalWheelPicker(
 }
 ```
 
-### Time Picker Sample (AM/PM + Hour + Minute)
+### 타임피커 샘플 (AM/PM + 시 + 분)
 
 ```kotlin
 @Composable
@@ -77,7 +77,7 @@ fun TimePickerSample() {
     val itemHeight = 48.dp
 
     Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-        // Custom selector spanning all three pickers
+        // 3개 피커에 걸쳐 하나로 보이는 커스텀 셀렉터
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -162,11 +162,11 @@ fun TimePickerSample() {
 
 ---
 
-## 🎨 Customization
+## 🎨 커스터마이징
 
-### Style
+### 스타일
 
-`WheelPickerDefaults.style()` provides full customization:
+`WheelPickerDefaults.style()`로 전체 스타일을 커스터마이징할 수 있습니다:
 
 ```kotlin
 VerticalWheelPicker(
@@ -195,13 +195,13 @@ VerticalWheelPicker(
 ) { item, isSelected -> }
 ```
 
-### Selector Customization
+### 셀렉터 커스터마이징
 
-There are two ways to customize the selector area:
+셀렉터 영역을 커스터마이징하는 방법은 두 가지입니다:
 
-**1. Draw a custom Box externally**
+**1. 외부에서 직접 Box를 그려 selector를 커스터마이징**
 
-You can draw a `Box` outside the picker to create a selector that spans multiple pickers:
+여러 피커에 걸쳐 하나로 보이는 셀렉터를 만들고 싶을 때 사용합니다:
 
 ```kotlin
 Box(
@@ -216,7 +216,7 @@ Box(
 )
 ```
 
-**2. Use the built-in selector via `WheelPickerDefaults.selectorStyle`**
+**2. `WheelPickerDefaults.selectorStyle`을 통해 내장 selector 사용**
 
 ```kotlin
 VerticalWheelPicker(
@@ -232,22 +232,22 @@ VerticalWheelPicker(
 ) { item, isSelected -> }
 ```
 
-### State Control
+### 상태 제어
 
-Control the picker programmatically using `WheelPickerState`:
+`WheelPickerState`를 사용하여 피커를 외부에서 제어할 수 있습니다:
 
 ```kotlin
 val state = rememberWheelPickerState(initialIndex = 0)
 
-// Read current index
+// 현재 선택된 인덱스 읽기
 val currentIndex = state.currentIndex
 
-// Scroll without animation
+// 애니메이션 없이 이동
 LaunchedEffect(Unit) {
     state.scrollToIndex(3)
 }
 
-// Scroll with animation
+// 애니메이션과 함께 이동
 LaunchedEffect(Unit) {
     state.animateScrollToIndex(3)
 }
@@ -255,38 +255,38 @@ LaunchedEffect(Unit) {
 
 ---
 
-## 📋 API Reference
+## 📋 API 레퍼런스
 
 ### `VerticalWheelPicker`
 
-| Parameter | Type | Default | Description |
+| 파라미터 | 타입 | 기본값 | 설명 |
 |---|---|---|---|
-| `items` | `List<T>` | required | List of items to display |
+| `items` | `List<T>` | 필수 | 표시할 아이템 목록 |
 | `modifier` | `Modifier` | `Modifier` | Modifier |
-| `state` | `WheelPickerState` | `rememberWheelPickerState()` | State holder |
-| `itemHeight` | `Dp` | `48.dp` | Height of each item |
-| `visibleItemCount` | `Int` | `5` | Number of visible items (odd recommended) |
-| `infinite` | `Boolean` | `true` | Enable infinite scrolling |
-| `style` | `WheelPickerStyle` | `WheelPickerDefaults.style()` | Style configuration |
-| `onItemSelected` | `(Int, T) -> Unit` | `{}` | Callback when item is settled |
-| `itemContent` | `@Composable (T, Boolean) -> Unit` | required | Item UI slot |
+| `state` | `WheelPickerState` | `rememberWheelPickerState()` | 상태 홀더 |
+| `itemHeight` | `Dp` | `48.dp` | 각 아이템의 높이 |
+| `visibleItemCount` | `Int` | `5` | 화면에 보이는 아이템 수 (홀수 권장) |
+| `infinite` | `Boolean` | `true` | 무한 스크롤 활성화 여부 |
+| `style` | `WheelPickerStyle` | `WheelPickerDefaults.style()` | 스타일 설정 |
+| `onItemSelected` | `(Int, T) -> Unit` | `{}` | 아이템 선택 완료 콜백 |
+| `itemContent` | `@Composable (T, Boolean) -> Unit` | 필수 | 아이템 UI 슬롯 |
 
 ### `HorizontalWheelPicker`
 
-Same as `VerticalWheelPicker` but with `itemWidth` instead of `itemHeight`.
+`VerticalWheelPicker`와 동일하나 `itemHeight` 대신 `itemWidth`를 사용합니다.
 
 ### `WheelPickerState`
 
-| Property / Function | Description |
+| 프로퍼티 / 함수 | 설명 |
 |---|---|
-| `currentIndex` | Currently selected item index |
-| `isScrollInProgress` | Whether scrolling is in progress |
-| `scrollToIndex(index)` | Scroll to index without animation |
-| `animateScrollToIndex(index)` | Scroll to index with animation |
+| `currentIndex` | 현재 선택된 아이템 인덱스 |
+| `isScrollInProgress` | 스크롤 진행 중 여부 |
+| `scrollToIndex(index)` | 애니메이션 없이 인덱스로 이동 |
+| `animateScrollToIndex(index)` | 애니메이션과 함께 인덱스로 이동 |
 
 ---
 
-## 📄 License
+## 📄 라이센스
 
 ```
 Copyright 2026 sonms
