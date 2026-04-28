@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,6 +23,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -31,20 +33,23 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.sonms.ratingbar.RatingBar
 import com.sonms.velvetcompose.ui.theme.VelvetComposeTheme
 import com.sonms.wheelpicker.HorizontalWheelPicker
 import com.sonms.wheelpicker.VerticalWheelPicker
 import com.sonms.wheelpicker.state.rememberWheelPickerState
 import com.sonms.wheelpicker.style.WheelPickerDefaults
 
+enum class SampleType {
+    VERTICAL_TIME, HORIZONTAL_TIME, RATING_BAR
+}
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            var timePickerType by remember {
-                mutableStateOf(false)
-            }
+            var selectedSample by remember { mutableStateOf(SampleType.VERTICAL_TIME) }
 
             VelvetComposeTheme(darkTheme = false) {
                 Scaffold (
@@ -58,16 +63,27 @@ class MainActivity : ComponentActivity() {
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center,
                     ) {
-                        Button(
-                            onClick = { timePickerType = !timePickerType },
-                        ) {
-                            Text(text = "Toggle Time Picker")
+                        Row(modifier = Modifier.fillMaxWidth()) {
+                            Button(onClick = {
+                                selectedSample = if (selectedSample == SampleType.VERTICAL_TIME)
+                                    SampleType.HORIZONTAL_TIME
+                                else
+                                    SampleType.VERTICAL_TIME
+                            }) {
+                                Text(text = "Toggle Time Picker")
+                            }
+
+                            Spacer(modifier = Modifier.weight(1f))
+
+                            Button(onClick = { selectedSample = SampleType.RATING_BAR }) {
+                                Text(text = "Toggle Rating Star")
+                            }
                         }
 
-                        if (timePickerType) {
-                            VerticalTimePickerSample()
-                        } else {
-                            HorizontalTimePickerSample()
+                        when (selectedSample) {
+                            SampleType.VERTICAL_TIME -> VerticalTimePickerSample()
+                            SampleType.HORIZONTAL_TIME -> HorizontalTimePickerSample()
+                            SampleType.RATING_BAR -> VelvetRatingBarSample()
                         }
                     }
                 }
@@ -75,6 +91,28 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+@Composable
+fun VelvetRatingBarSample() {
+    var initRating by remember { mutableFloatStateOf(0f) }
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+    ) {
+        RatingBar(
+            rating = initRating,
+            maxRating = 5,
+            onRatingChanged = { rating ->
+                initRating = rating
+            },
+        )
+    }
+}
+
+
 @Composable
 fun VerticalTimePickerSample() {
     val amPmItems = remember { listOf("AM", "PM") }
