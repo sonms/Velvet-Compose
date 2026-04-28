@@ -22,11 +22,32 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Generate Dokka HTML
+      - name: Generate Dokka HTML - WheelPicker
         run: ./gradlew :wheelpicker:dokkaGeneratePublicationHtml --no-configuration-cache
 
-      - name: Deploy to GitHub Pages
+      - name: Generate Dokka HTML - RatingBar
+        run: ./gradlew :ratingbar:dokkaGeneratePublicationHtml --no-configuration-cache
+
+      - name: Deploy Root Index
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages
+          folder: docs
+          target-folder: .
+          clean: false
+
+      - name: Deploy WheelPicker Docs
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: gh-pages
           folder: wheelpicker/build/dokka/html
+          target-folder: wheelpicker
+          clean: false
+
+      - name: Deploy RatingBar Docs
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages
+          folder: ratingbar/build/dokka/html
+          target-folder: ratingbar
+          clean: false
