@@ -1,41 +1,51 @@
-# 🎡 Velvet-Compose WheelPicker
 <div style="text-align: right">
 
 [English](README.md) | [한국어](README_KO.md)
 
 </div>
 
-[![Maven Central](https://img.shields.io/maven-central/v/io.github.sonms/wheelpicker.svg)](https://central.sonatype.com/artifact/io.github.sonms/wheelpicker)
+# 🎡 Velvet-Compose
+
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 [![API](https://img.shields.io/badge/API-24%2B-brightgreen.svg)](https://android-arsenal.com/api?level=24)
 
-Bring the classic iOS 3D wheel picker to your Jetpack Compose app.  
-Supports infinite scrolling, 3D graphic layers, and full style customization.
+Smooth & beautiful Jetpack Compose component library inspired by iOS.  
+Velvet provides silky-smooth UI components with full customization support.
 
 ---
 
-## 📸 Preview
+## 📦 Components
 
-| Vertical                                               | Horizontal                                               |
-|--------------------------------------------------------|----------------------------------------------------------|
-| <video src="assets/vertical_preview.mp4" width="200"/> | <video src="assets/horizontal_preview.mp4" width="200"/> |
+| Component | Maven Central | Description |
+|---|---|---|
+| 🎡 **WheelPicker** | [![Maven Central](https://img.shields.io/maven-central/v/io.github.sonms/wheelpicker.svg)](https://central.sonatype.com/artifact/io.github.sonms/wheelpicker) | iOS-style 3D wheel picker with infinite scroll |
+| ⭐ **RatingBar** | [![Maven Central](https://img.shields.io/maven-central/v/io.github.sonms/ratingbar.svg)](https://central.sonatype.com/artifact/io.github.sonms/ratingbar) | Customizable rating bar with spring animation & haptic feedback |
+
 ---
 
 ## 🚀 Getting Started
 
 ### Gradle
 
-Add the dependency to your `build.gradle.kts`:
-
 ```kotlin
 dependencies {
     implementation("io.github.sonms:wheelpicker:0.0.1")
+    implementation("io.github.sonms:ratingbar:0.0.1")
 }
 ```
 
 ---
 
-## 📖 Usage
+## 🎡 WheelPicker
+
+iOS-style 3D wheel picker for Jetpack Compose.  
+Supports infinite scrolling, 3D graphic layers, and full style customization.
+
+### 📸 Preview
+
+| Vertical | Horizontal |
+|---|---|
+| <video src="assets/vertical_preview.mp4" width="200"/> | <video src="assets/horizontal_preview.mp4" width="200"/> |
 
 ### Basic Usage
 
@@ -48,9 +58,7 @@ VerticalWheelPicker(
     state = state,
     visibleItemCount = 5,
     infinite = true,
-    onItemSelected = { index, item ->
-        // handle selection
-    },
+    onItemSelected = { index, item -> },
 ) { item, isSelected ->
     Text(
         text = item,
@@ -160,13 +168,7 @@ fun TimePickerSample() {
 }
 ```
 
----
-
-## 🎨 Customization
-
-### Style
-
-`WheelPickerDefaults.style()` provides full customization:
+### Customization
 
 ```kotlin
 VerticalWheelPicker(
@@ -197,11 +199,7 @@ VerticalWheelPicker(
 
 ### Selector Customization
 
-There are two ways to customize the selector area:
-
 **1. Draw a custom Box externally**
-
-You can draw a `Box` outside the picker to create a selector that spans multiple pickers:
 
 ```kotlin
 Box(
@@ -234,30 +232,20 @@ VerticalWheelPicker(
 
 ### State Control
 
-Control the picker programmatically using `WheelPickerState`:
-
 ```kotlin
 val state = rememberWheelPickerState(initialIndex = 0)
 
-// Read current index
 val currentIndex = state.currentIndex
 
-// Scroll without animation
 LaunchedEffect(Unit) {
     state.scrollToIndex(3)
-}
-
-// Scroll with animation
-LaunchedEffect(Unit) {
     state.animateScrollToIndex(3)
 }
 ```
 
----
+### API Reference
 
-## 📋 API Reference
-
-### `VerticalWheelPicker`
+#### `VerticalWheelPicker`
 
 | Parameter | Type | Default | Description |
 |---|---|---|---|
@@ -271,11 +259,11 @@ LaunchedEffect(Unit) {
 | `onItemSelected` | `(Int, T) -> Unit` | `{}` | Callback when item is settled |
 | `itemContent` | `@Composable (T, Boolean) -> Unit` | required | Item UI slot |
 
-### `HorizontalWheelPicker`
+#### `HorizontalWheelPicker`
 
 Same as `VerticalWheelPicker` but with `itemWidth` instead of `itemHeight`.
 
-### `WheelPickerState`
+#### `WheelPickerState`
 
 | Property / Function | Description |
 |---|---|
@@ -283,6 +271,96 @@ Same as `VerticalWheelPicker` but with `itemWidth` instead of `itemHeight`.
 | `isScrollInProgress` | Whether scrolling is in progress |
 | `scrollToIndex(index)` | Scroll to index without animation |
 | `animateScrollToIndex(index)` | Scroll to index with animation |
+
+---
+
+## ⭐ RatingBar
+
+Highly customizable RatingBar for Jetpack Compose.  
+Features spring animation, haptic feedback, half-step support, and custom icon slot API.
+
+### 📸 Preview
+
+| Default Star | Custom Icon |
+|---|---|
+| <video src="assets/ratingbar_star_preview.mp4" width="200"/> | <video src="assets/ratingbar_custom_preview.mp4" width="200"/> |
+
+### Basic Usage
+
+```kotlin
+// Read-only
+RatingBar(
+    rating = 3.5f,
+)
+
+// Interactive
+var rating by remember { mutableStateOf(3.5f) }
+RatingBar(
+    rating = rating,
+    onRatingChanged = { rating = it },
+)
+```
+
+### Custom Icon (Slot API)
+
+```kotlin
+RatingBar(
+    rating = 3.5f,
+    onRatingChanged = { rating = it },
+) { index, fraction ->
+    Icon(
+        imageVector = if (fraction > 0f) Icons.Filled.Favorite
+                      else Icons.Outlined.FavoriteBorder,
+        tint = if (fraction > 0f) Color.Red else Color.Gray,
+        contentDescription = null,
+    )
+}
+```
+
+### Customization
+
+```kotlin
+RatingBar(
+    rating = 3.5f,
+    maxRating = 5,
+    stepSize = StepSize.HALF,
+    style = RatingBarDefaults.style(
+        filledColor = Color.Yellow,
+        emptyColor = Color.Gray,
+        itemSize = 32.dp,
+        itemSpacing = 4.dp,
+        // Spring animation (null to disable)
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow,
+        ),
+        // Haptic feedback on/off
+        hapticFeedbackEnabled = true,
+    ),
+    onRatingChanged = { rating = it },
+)
+```
+
+### API Reference
+
+#### `RatingBar`
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `rating` | `Float` | required | Current rating value (0f ~ maxRating) |
+| `modifier` | `Modifier` | `Modifier` | Modifier |
+| `maxRating` | `Int` | `5` | Maximum number of items |
+| `stepSize` | `StepSize` | `StepSize.HALF` | Step size (FULL or HALF) |
+| `style` | `RatingBarStyle` | `RatingBarDefaults.style()` | Style configuration |
+| `onRatingChanged` | `((Float) -> Unit)?` | `null` | Callback when rating changes. null for read-only |
+| `itemContent` | `@Composable (Int, Float) -> Unit` | - | Custom icon slot (optional) |
+
+#### `StepSize`
+
+| Value | Description |
+|---|---|
+| `StepSize.FULL` | Select in increments of 1.0 |
+| `StepSize.HALF` | Select in increments of 0.5 |
 
 ---
 
