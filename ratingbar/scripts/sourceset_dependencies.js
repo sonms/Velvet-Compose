@@ -1,0 +1,1 @@
+sourceset_dependencies='{":ratingbar/main":[],":ratingbar/release":[]}'

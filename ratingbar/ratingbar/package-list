@@ -1,0 +1,27 @@
+$dokka.format:html-v1
+$dokka.linkExtension:html
+$dokka.location:com.sonms.ratingbar.model////PointingToDeclaration/ratingbar/com.sonms.ratingbar.model/index.html
+$dokka.location:com.sonms.ratingbar.model/StepSize.FULL///PointingToDeclaration/{"org.jetbrains.dokka.links.EnumEntryDRIExtra":{"key":"org.jetbrains.dokka.links.EnumEntryDRIExtra"}}ratingbar/com.sonms.ratingbar.model/-step-size/-f-u-l-l/index.html
+$dokka.location:com.sonms.ratingbar.model/StepSize.HALF///PointingToDeclaration/{"org.jetbrains.dokka.links.EnumEntryDRIExtra":{"key":"org.jetbrains.dokka.links.EnumEntryDRIExtra"}}ratingbar/com.sonms.ratingbar.model/-step-size/-h-a-l-f/index.html
+$dokka.location:com.sonms.ratingbar.model/StepSize///PointingToDeclaration/ratingbar/com.sonms.ratingbar.model/-step-size/index.html
+$dokka.location:com.sonms.ratingbar.model/StepSize/entries/#/PointingToDeclaration/ratingbar/com.sonms.ratingbar.model/-step-size/entries.html
+$dokka.location:com.sonms.ratingbar.model/StepSize/value/#/PointingToDeclaration/ratingbar/com.sonms.ratingbar.model/-step-size/value.html
+$dokka.location:com.sonms.ratingbar.model/StepSize/valueOf/#kotlin.String/PointingToDeclaration/ratingbar/com.sonms.ratingbar.model/-step-size/value-of.html
+$dokka.location:com.sonms.ratingbar.model/StepSize/values/#/PointingToDeclaration/ratingbar/com.sonms.ratingbar.model/-step-size/values.html
+$dokka.location:com.sonms.ratingbar.style////PointingToDeclaration/ratingbar/com.sonms.ratingbar.style/index.html
+$dokka.location:com.sonms.ratingbar.style/RatingBarDefaults///PointingToDeclaration/ratingbar/com.sonms.ratingbar.style/-rating-bar-defaults/index.html
+$dokka.location:com.sonms.ratingbar.style/RatingBarDefaults/style/#androidx.compose.ui.graphics.Color#androidx.compose.ui.graphics.Color#androidx.compose.ui.unit.Dp#androidx.compose.ui.unit.Dp#androidx.compose.animation.core.AnimationSpec[kotlin.Float]?#kotlin.Boolean/PointingToDeclaration/ratingbar/com.sonms.ratingbar.style/-rating-bar-defaults/style.html
+$dokka.location:com.sonms.ratingbar.style/RatingBarStyle///PointingToDeclaration/ratingbar/com.sonms.ratingbar.style/-rating-bar-style/index.html
+$dokka.location:com.sonms.ratingbar.style/RatingBarStyle/RatingBarStyle/#androidx.compose.ui.graphics.Color#androidx.compose.ui.graphics.Color#androidx.compose.ui.unit.Dp#androidx.compose.ui.unit.Dp#androidx.compose.animation.core.AnimationSpec[kotlin.Float]?#kotlin.Boolean/PointingToDeclaration/ratingbar/com.sonms.ratingbar.style/-rating-bar-style/-rating-bar-style.html
+$dokka.location:com.sonms.ratingbar.style/RatingBarStyle/animationSpec/#/PointingToDeclaration/ratingbar/com.sonms.ratingbar.style/-rating-bar-style/animation-spec.html
+$dokka.location:com.sonms.ratingbar.style/RatingBarStyle/emptyColor/#/PointingToDeclaration/ratingbar/com.sonms.ratingbar.style/-rating-bar-style/empty-color.html
+$dokka.location:com.sonms.ratingbar.style/RatingBarStyle/filledColor/#/PointingToDeclaration/ratingbar/com.sonms.ratingbar.style/-rating-bar-style/filled-color.html
+$dokka.location:com.sonms.ratingbar.style/RatingBarStyle/hapticFeedbackEnabled/#/PointingToDeclaration/ratingbar/com.sonms.ratingbar.style/-rating-bar-style/haptic-feedback-enabled.html
+$dokka.location:com.sonms.ratingbar.style/RatingBarStyle/itemSize/#/PointingToDeclaration/ratingbar/com.sonms.ratingbar.style/-rating-bar-style/item-size.html
+$dokka.location:com.sonms.ratingbar.style/RatingBarStyle/itemSpacing/#/PointingToDeclaration/ratingbar/com.sonms.ratingbar.style/-rating-bar-style/item-spacing.html
+$dokka.location:com.sonms.ratingbar////PointingToDeclaration/ratingbar/com.sonms.ratingbar/index.html
+$dokka.location:com.sonms.ratingbar//RatingBar/#kotlin.Float#androidx.compose.ui.Modifier#kotlin.Int#com.sonms.ratingbar.model.StepSize#com.sonms.ratingbar.style.RatingBarStyle#kotlin.Function1[kotlin.Float,kotlin.Unit]?#kotlin.Function2[kotlin.Int,kotlin.Float,kotlin.Unit]/PointingToDeclaration/ratingbar/com.sonms.ratingbar/-rating-bar.html
+$dokka.location:com.sonms.ratingbar//RatingBar/#kotlin.Float#androidx.compose.ui.Modifier#kotlin.Int#com.sonms.ratingbar.model.StepSize#com.sonms.ratingbar.style.RatingBarStyle#kotlin.Function1[kotlin.Float,kotlin.Unit]?/PointingToDeclaration/ratingbar/com.sonms.ratingbar/-rating-bar.html
+com.sonms.ratingbar
+com.sonms.ratingbar.model
+com.sonms.ratingbar.style
