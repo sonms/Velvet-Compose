@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
@@ -122,27 +123,33 @@ private fun RatingBarImpl(
         remember(rating) { mutableFloatStateOf(rating.coerceIn(0f, maxRating.toFloat())) }
     }
 
-    // 터치 위치로 rating 계산
-    fun calculateRating(x: Float, totalWidth: Float): Float {
-        val itemWidth = totalWidth / maxRating
-        val rawRating = if (isRtl) {
-            (totalWidth - x) / itemWidth
-        } else {
-            x / itemWidth
-        }
-        val clampedRating = rawRating.coerceIn(0f, maxRating.toFloat())
-        return (clampedRating / stepSize.value).let {
+    // 터치 위치로 rating 계산 (아이템 사이 spacing을 제외한 실제 아이템 폭 기준)
+    fun calculateRating(x: Float, itemSizePx: Float, itemSpacingPx: Float): Float {
+        val segment = itemSizePx + itemSpacingPx
+        val totalWidth = maxRating * itemSizePx + (maxRating - 1) * itemSpacingPx
+        val effectiveX = (if (isRtl) totalWidth - x else x).coerceIn(0f, totalWidth)
+
+        val index = (effectiveX / segment).toInt().coerceIn(0, maxRating - 1)
+        val localX = (effectiveX - index * segment).coerceAtLeast(0f)
+        val fractionInItem = (localX / itemSizePx).coerceIn(0f, 1f)
+
+        val rawRating = (index + fractionInItem).coerceIn(0f, maxRating.toFloat())
+        return (rawRating / stepSize.value).let {
             kotlin.math.round(it) * stepSize.value
         }.coerceIn(stepSize.value, maxRating.toFloat())
     }
 
     var lastHapticRating by remember { mutableFloatStateOf(rating) }
 
+    val density = LocalDensity.current
+    val itemSizePx = with(density) { style.itemSize.toPx() }
+    val itemSpacingPx = with(density) { style.itemSpacing.toPx() }
+
     val interactionModifier = if (onRatingChanged != null) {
         Modifier
-            .pointerInput(stepSize, maxRating) {
+            .pointerInput(stepSize, maxRating, itemSizePx, itemSpacingPx) {
                 detectTapGestures { offset ->
-                    val newRating = calculateRating(offset.x, size.width.toFloat())
+                    val newRating = calculateRating(offset.x, itemSizePx, itemSpacingPx)
                     if (style.hapticFeedbackEnabled) {
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     }
@@ -150,9 +157,10 @@ private fun RatingBarImpl(
                     lastHapticRating = newRating
                 }
             }
-            .pointerInput(stepSize, maxRating) {
+            .pointerInput(stepSize, maxRating, itemSizePx, itemSpacingPx) {
                 detectHorizontalDragGestures { change, _ ->
-                    val newRating = calculateRating(change.position.x, size.width.toFloat())
+                    change.consume()
+                    val newRating = calculateRating(change.position.x, itemSizePx, itemSpacingPx)
                     if (style.hapticFeedbackEnabled && newRating != lastHapticRating) {
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         lastHapticRating = newRating

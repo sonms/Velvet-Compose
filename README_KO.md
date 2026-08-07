@@ -29,8 +29,8 @@ iOS 감성의 부드럽고 아름다운 Jetpack Compose 컴포넌트 라이브�
 
 ```kotlin
 dependencies {
-    implementation("io.github.sonms:wheelpicker:0.0.1")
-    implementation("io.github.sonms:ratingbar:0.0.1")
+    implementation("io.github.sonms:wheelpicker:0.0.2")
+    implementation("io.github.sonms:ratingbar:0.0.2")
 }
 ```
 

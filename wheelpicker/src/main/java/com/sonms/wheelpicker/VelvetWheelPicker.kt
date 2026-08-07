@@ -1,6 +1,5 @@
 package com.sonms.wheelpicker
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -13,6 +12,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.style.styleable
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
@@ -137,7 +137,10 @@ internal fun <T> WheelPickerImpl(
     orientation: WheelPickerOrientation,
     itemContent: @Composable (item: T, isSelected: Boolean) -> Unit,
 ) {
-    if (items.isEmpty()) return
+    if (items.isEmpty()) {
+        SideEffect { state.itemCount = 0 }
+        return
+    }
 
     val immutableItems = remember(items) {
         items as? ImmutableList<T> ?: items.toImmutableList()
@@ -188,10 +191,10 @@ internal fun <T> WheelPickerImpl(
                     else
                         Modifier.width(itemSize).height(itemSize)
                 )
-                .background(
-                    color = style.selector.background,
-                    shape = style.selector.shape,
-                )
+                .styleable {
+                    background(style.selector.background)
+                    shape(style.selector.shape)
+                }
         )
 
         if (style.selector.showDivider) {

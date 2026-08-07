@@ -35,6 +35,11 @@ android {
     }
 }
 
+composeCompiler {
+    reportsDestination = layout.buildDirectory.dir("compose_reports")
+    metricsDestination = layout.buildDirectory.dir("compose_metrics")
+}
+
 dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.material3)
@@ -54,7 +59,7 @@ dokka {
     }
 }
 
-val velvetVersion = "0.0.1"
+val velvetVersion = "0.0.2"
 
 mavenPublishing {
     coordinates(

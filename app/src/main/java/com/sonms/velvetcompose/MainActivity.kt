@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.style.styleable
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -311,14 +312,16 @@ private fun TimePickerItem(
     text: String,
     isSelected: Boolean,
 ) {
-    Text(
-        text = text,
-        fontSize = if (isSelected) 20.sp else 16.sp,
-        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-        color = if (isSelected) {
-            Color.Black
-        } else {
-            Color.Gray
-        },
-    )
+    Box(
+        modifier = Modifier
+            .styleable {
+                contentColor(if (isSelected) Color.Black else Color.Gray)
+            },
+    ) {
+        Text(
+            text = text,
+            fontSize = if (isSelected) 20.sp else 16.sp,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+        )
+    }
 }

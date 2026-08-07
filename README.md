@@ -29,8 +29,8 @@ Velvet provides silky-smooth UI components with full customization support.
 
 ```kotlin
 dependencies {
-    implementation("io.github.sonms:wheelpicker:0.0.1")
-    implementation("io.github.sonms:ratingbar:0.0.1")
+    implementation("io.github.sonms:wheelpicker:0.0.2")
+    implementation("io.github.sonms:ratingbar:0.0.2")
 }
 ```
 

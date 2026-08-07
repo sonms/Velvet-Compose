@@ -1,0 +1,61 @@
+name: Publish to Maven Central
+
+# Tag convention: "<module>-v<version>", e.g. wheelpicker-v0.0.2 or ratingbar-v0.0.2.
+# Only the module named in the tag is built, tested, and published.
+on:
+  push:
+    tags:
+      - 'wheelpicker-v*'
+      - 'ratingbar-v*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: temurin
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Resolve module and version from tag
+        id: release
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          MODULE="${TAG%-v*}"
+          VERSION="${TAG##*-v}"
+
+          if [[ "$MODULE" != "wheelpicker" && "$MODULE" != "ratingbar" ]]; then
+            echo "Unknown module '$MODULE' derived from tag '$TAG'" >&2
+            exit 1
+          fi
+
+          DECLARED_VERSION=$(grep -oP '(?<=val velvetVersion = ")[^"]+' "$MODULE/build.gradle.kts")
+          if [[ "$DECLARED_VERSION" != "$VERSION" ]]; then
+            echo "Tag version ($VERSION) does not match $MODULE/build.gradle.kts velvetVersion ($DECLARED_VERSION)" >&2
+            exit 1
+          fi
+
+          echo "module=$MODULE" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Run module tests
+        run: ./gradlew :${{ steps.release.outputs.module }}:testReleaseUnitTest --no-configuration-cache
+
+      - name: Publish and release to Maven Central
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_IN_MEMORY_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.SIGNING_IN_MEMORY_KEY_ID }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_IN_MEMORY_KEY_PASSWORD }}
+        run: ./gradlew :${{ steps.release.outputs.module }}:publishAndReleaseToMavenCentral --no-configuration-cache
