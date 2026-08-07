@@ -25,5 +25,13 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      - name: Create gradle.properties
+        run: |
+          cat >> gradle.properties <<'EOF'
+          android.useAndroidX=true
+          android.nonTransitiveRClass=true
+          kotlin.code.style=official
+          EOF
+
       - name: Build and test all modules
         run: ./gradlew build --no-configuration-cache
