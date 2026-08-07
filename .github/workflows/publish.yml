@@ -33,6 +33,7 @@ jobs:
           android.useAndroidX=true
           android.nonTransitiveRClass=true
           kotlin.code.style=official
+          org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8
           EOF
 
       - name: Resolve module and version from tag
