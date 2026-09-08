@@ -138,3 +138,16 @@ internal class PressScaleNode(
 **결정 게이트 조건 1** ("재작성이 원본보다 낫거나 동등"): `fadingEdge`(§ARCHITECTURE 9)로는 불충족이었으나
 그건 애초에 `composed` 케이스가 아니었음. **Case A 로 재평가 시 충족.** Case B 는 codegen 의
 경계를 명확히 보여줌 — 라이브러리화하면 `onUpdate` 훅을 v1.1 스코프에 넣어야 한다.
+
+---
+
+## ⚠️ 그 뒤 발견 — invalidation 스코프는 작동하지 않는다
+
+`ARCHITECTURE.md` §10 참고. `NodeChain.updateNode` 바이트코드상 `update()` 직후
+`autoInvalidateUpdatedNode()` 가 무조건 실행되어 노드의 모든 capability 를 무효화한다.
+억제 수단 `Modifier.Node.shouldAutoInvalidate` 는 Element 가 아니라 Node 쪽이고 Compose 1.12
+에서 deprecated. **따라서 위 "종합" 표의 "모든 부류 공통: `@Invalidates` 정합성 체크" 는
+컴파일 타임 lint 로만 유효하고 런타임 성능 효과는 없다.**
+
+codegen 이 실제로 주는 것은 (1) 보일러플레이트 제거 (2) equals 스킵을 보장하는 정확한
+`equals`/`hashCode`. → 라이브러리 명제 재검토는 `ARCHITECTURE.md` §11.

@@ -85,6 +85,13 @@ class ModifierNodeProcessor(
 
         val params = ctor.parameters.map { p -> resolveParam(p, node, supported) }
 
+        // 주의: Compose 는 update() 직후 autoInvalidateUpdatedNode() 로 노드의 모든 capability 를
+        // 무조건 무효화한다(NodeChain.updateNode). 유일한 억제 수단인 Modifier.Node.shouldAutoInvalidate
+        // 는 (1) Element 가 아니라 Node 쪽 프로퍼티라 codegen 이 주입 못 하고 (2) Compose 1.12 에서
+        // @Deprecated 다. 따라서 생성된 update() 의 세분화된 invalidate 호출은 사실상 "이중" 이며
+        // 런타임 최적화 효과가 없다. @Invalidates 는 현재 컴파일 타임 검증 용도로만 의미가 있다.
+        // 자세한 내용: ARCHITECTURE.md §10.
+
         // --- 확장 함수: fun Modifier.<name>(...): Modifier = this.then(<Name>Element(...)) ---
         val extFun = FunSpec.builder(funName)
             .addModifiers(visibility)
