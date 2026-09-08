@@ -359,7 +359,8 @@ invalidation"*. 성능은 부차적 셀링포인트로만, 과장 없이. 이미
 
 ### 남은 것
 - (보류) `@Default` 구현 — 사용자 요청 시
-- `master` 병합 전 정리: `:modifier-node-sample` 을 ship 할지 trim 할지, 커밋 squash 여부
+- `:modifier-node-sample` 정리 ✅ (한 파일 1 modifier, `@SkipWhenTrue` 커버, `README.md`, 미배포 명시)
+- `master` 병합 전: 커밋 squash 여부
 
 **A. 중단.** (보류) 니치가 좁고 파라미터 단위 이득이 미미하다고 보면 유효했던 선택.
 
