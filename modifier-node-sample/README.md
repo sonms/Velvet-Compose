@@ -9,7 +9,7 @@ This is the examples + integration test module for `modifier-node-codegen`. **No
 |---|---|
 | `DebugTint.kt` | 가장 단순한 예 — draw 전용 노드 |
 | `FixedSquare.kt` | draw + layout 노드 — `update()` 계층 접기 |
-| `FadingEdge.kt` | dogfood. `graphicsLayer` 오프스크린 + `DstIn` 마스크. composition-free 체인을 raw 노드로 내렸을 때의 손익을 보여주는 케이스 (`../ARCHITECTURE.md` §9) |
+| `FadingEdge.kt` | dogfood. `graphicsLayer` 오프스크린 + `DstIn` 마스크. composition-free 체인을 raw 노드로 내렸을 때의 손익을 보여주는 케이스 (`../ARCHITECTURE.md` §7) |
 | `compare/AccentOverlay.kt` | `composed` vs Node — CompositionLocal 읽기 (Case A) |
 | `compare/PressScale.kt` | `composed` vs Node — InteractionSource + 애니메이션 (Case B) |
 | `COMPARISON.md` | 위 두 케이스의 before/after 분석 |

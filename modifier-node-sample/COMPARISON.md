@@ -130,24 +130,8 @@ internal class PressScaleNode(
 | **interaction / coroutine / animation** | `@OnChange` 로 재구독 격차 축소(10→35). 남은 장황함(`Animatable`/카운팅)은 진짜 노드 코드 |
 | 모든 부류 공통 | 안정 equals·inspector·`@Invalidates` 정합성 체크·ABI 표면 축소·`@SkipWhen*` 가드 |
 
-**결정 게이트 조건 1** ("재작성이 원본보다 낫거나 동등"): `fadingEdge`(§ARCHITECTURE 9)로는 불충족이었으나
-그건 애초에 `composed` 케이스가 아니었음. **Case A 로 재평가 시 충족.** Case B 도 `@OnChange` 이후엔
-근접(값 읽기 케이스만큼 결정적이진 않음).
-
----
-
-## ⚠️ 그 뒤 발견 — invalidation 스코프는 **작동한다** (앞선 정정)
-
-`ARCHITECTURE.md` §10 참고. 한때 "작동 안 함" 이라 적었으나 **오독이었다**:
-
-- `NodeKind.autoInvalidateNodeSelf` 에 opt-out 이 있다:
-  `if (phase == Updated && !node.shouldAutoInvalidate) return`
-- `Modifier.Node.shouldAutoInvalidate` 는 deprecated 아님. Compose 의 `graphicsLayer`/`paint`
-  모디파이어가 이 패턴을 쓴다.
-- 통제 실험(`AutoInvalidateProbeTest`): `shouldAutoInvalidate = false` 노드는 draw 전용
-  파라미터 변경 시 remeasure 안 함.
-
-제약: codegen 이 Node 클래스에 그 한 줄을 못 넣으므로, `@Invalidates` 사용 시 KSP 가
-`override val shouldAutoInvalidate get() = false` 를 요구한다(없으면 컴파일 에러).
-
-단 성능 이득 범위는 좁다 (§10.5). 주된 가치는 여전히 보일러플레이트 제거 + equals 안정성.
+- **값 읽기 부류**: 결정적. `fadingEdge`(composition-free 체인)는 `composed` 케이스가 아니었고
+  raw 노드로 내려서 손해 — `../ARCHITECTURE.md` §7.
+- **interaction 부류**: `@OnChange` 이후 근접(값 읽기만큼 결정적이진 않음).
+- 파라미터 단위 invalidation 이 실제로 작동하는지(그리고 성능 이득이 왜 좁은지)는
+  `../ARCHITECTURE.md` §4·§5.
