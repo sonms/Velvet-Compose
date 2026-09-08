@@ -11,6 +11,7 @@ java {
 }
 
 kotlin {
+    explicitApi()
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_11)
     }

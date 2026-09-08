@@ -1,7 +1,9 @@
 # ARCHITECTURE — Modifier.Node codegen (실험 브랜치)
 
 > 브랜치: `feat/modifier-node-codegen`
-> 상태: MVP 검증 단계. 아래 "결정 게이트"를 통과하기 전까지 `master` 병합 없음.
+> 상태: **갈래 B 확정** (§11). MVP + ABI/skipWhen/onChange 구현 완료, README·default 인자 남음.
+> `master` 병합은 남은 작업 정리 후.
+> 현재 진행 상태의 정본은 §11 "남은 작업" 이다 (아래 §6 진행 상태는 초기 기록).
 
 ---
 
@@ -90,11 +92,9 @@ invalidation 계층: `Measure` > `Placement` > `Draw` (상위 하나만 호출),
 
 ### 3.2 바이너리 호환성 (라이브러리 저자용)
 
-- Element/Node 클래스를 `internal` 로 감추고 `Modifier.foo(...)` 함수만 공개
-  → 내부 리팩터가 ABI를 깨지 않음, `.api` diff가 예측 가능
-- (opt-in) `@ModifierNodeFactory(binaryCompat = true)`:
-  Kotlin default argument 대신 명시적 오버로드 체인 생성
-  → 파라미터 추가 = 심볼 추가, 기존 심볼 유지
+- 생성된 Element 는 항상 `internal`, 공개되는 건 `Modifier.foo(...)` 함수뿐
+  (`@ModifierNodeFactory(visibility = ...)` 로 함수 가시성 제어). → 내부 리팩터가 ABI를 깨지 않음.
+- (범위 밖) default argument 대신 오버로드 체인 생성 — 파라미터 추가 = 심볼 추가.
 
 ---
 
@@ -136,8 +136,6 @@ invalidation 계층: `Measure` > `Placement` > `Draw` (상위 하나만 호출),
   - 검증: `@Invalidates` scope ↔ 노드가 구현한 인터페이스 정합성, `var` 파라미터 강제
 - 지원 노드 인터페이스 **2개만**: `DrawModifierNode`, `LayoutModifierNode`
 - invalidation 계층 접기 로직 (`Measure` > `Placement` > `Draw`)
-- 테스트 헬퍼 1개: "파라미터 P를 바꾸면 `invalidateDraw` 만 호출되고 `invalidateMeasurement` 는
-  호출되지 않는다" 를 검증  ← **아직 미작성**
 - 모듈: `:modifier-node-annotations`, `:modifier-node-processor`, `:modifier-node-sample`
 - **Dogfooding: `:modifier-node-sample` 안에서 `fadingEdge` 재작성.**
   ratingbar / wheelpicker 컴포넌트 본체에 이 codegen dependency를 연결하지 않는다
@@ -146,32 +144,29 @@ invalidation 계층: `Measure` > `Placement` > `Draw` (상위 하나만 호출),
     순수 `DrawModifierNode` 로는 완전 재현 불가 — GraphicsLayer 위임이 필요하고 이는
     결정 게이트에서 "노드 행동 코드는 codegen이 안 도와준다" 를 실증하는 좋은 케이스.
 
-### 진행 상태 (2026-09-08)
+### 초기 진행 기록 (2026-09-08) — 현재 상태는 §11 참고
 
-- [x] 모듈 3개 스캐폴딩, 카탈로그/settings 배선
-- [x] 어노테이션 정의
-- [x] 프로세서: Element + 확장 함수 생성, invalidation 계층 접기, `var`/scope 검증
-- [x] `:modifier-node-sample` 예제 2개(`debugTint` draw 전용, `fixedSquare` draw+layout) 빌드/코드젠 확인
-- [x] `fadingEdge` 재작성 (§9 참고)
-- [x] `composed` vs Node 비교 2케이스 (§10, `COMPARISON.md`)
-- [x] 계약 테스트 — `GeneratedElementTest`, `InvalidationContractTest`(equals 스킵), `AutoInvalidateProbeTest`(opt-out 동작)
-- [x] **invalidation 스코프 실효성 조사 → 작동 확인 (§10). 첫 "불가" 결론은 오독, 정정함**
-- [x] 프로세서: `@Invalidates` 사용 시 `shouldAutoInvalidate` override 강제
-- [ ] 기본값(default argument) 처리 — 현재 미지원, 호출부에서 전 인자 전달 필요
-- [ ] **§11 A/B/C 갈래 선택** ← 다음 결정
+- [x] 모듈 3개 스캐폴딩, 어노테이션, 프로세서(Element + 함수 생성, invalidation 계층 접기, 검증)
+- [x] 샘플 예제 + `fadingEdge` 재작성 (§9), `composed` vs Node 비교 (§10, `COMPARISON.md`)
+- [x] 계약 테스트 — `GeneratedElementTest`, `InvalidationContractTest`, `AutoInvalidateProbeTest`
+- [x] invalidation 스코프 실효성 조사 → 작동 확인 (§10). 첫 "불가" 결론은 오독, 정정함
+- [x] 갈래 B 확정 → 이후 작업은 §11
 
 ### 한계 (MVP 구현상)
 
 - 생성 함수에 default argument 재현 불가 (KSP가 기본값 표현식을 못 읽음). 전 인자 필수.
+  → `@Default(String)` 마커 검토 완료(§12), 미구현.
 - 제네릭 Node, 다중 타입 파라미터 미검증.
-- `equals`/`hashCode` 는 참조형 파라미터의 `equals` 안정성에 의존 (람다/불안정 타입 넣으면 그대로 깨짐 — 이는 사용자 책임).
+- `equals`/`hashCode` 는 참조형 파라미터의 `equals` 안정성에 의존. 함수 타입 파라미터는
+  프로세서가 경고한다(참조 동일성 → 재사용 깨짐). 그 밖의 불안정 타입은 사용자 책임.
+- 하드 에러(non-var, 잘못된 마커, `@OnChange` 콜백 누락) 시 해당 노드의 생성물을 만들지 않는다(2차 에러 방지).
 
 ### 범위 밖 (MVP 이후)
 
 - 노드 인터페이스 확장 (`PointerInputModifierNode`, `SemanticsModifierNode`, `GlobalPositionAwareModifierNode` ...)
 - `binaryCompat = true` 오버로드 체인
-- Element/Node `internal` 은닉 옵션
 - IDE inspection / quick-fix
+- 프로세서 자체 단위 테스트 (현재는 `:modifier-node-sample` 생성물 + Robolectric 로 간접 검증)
 
 ---
 
@@ -358,8 +353,8 @@ invalidation"*. 성능은 부차적 셀링포인트로만, 과장 없이. 이미
    - KSP 가 `fun on<Name>Changed()` (무인자) 선언을 요구
    - `PressScaleNode` 를 이걸로 갱신 → `boundSource` dedup 필드 + `draw()` 의 `rebind()` 제거
    - `onChange_fires_only_when_param_changes` 테스트
-4. default argument 지원 검토 ← 다음
-5. README 에 §5 한계 + §10.5 성능 현실 명시
+4. default argument 지원 — `@Default(String)` 마커 검토 완료(§12), 구현 보류
+5. README 에 §5 한계 + §10.5 성능 현실 명시 ← 다음
 
 **A. 중단.** (보류) 니치가 좁고 파라미터 단위 이득이 미미하다고 보면 유효했던 선택.
 
@@ -370,3 +365,17 @@ invalidation"*. 성능은 부차적 셀링포인트로만, 과장 없이. 이미
   (그리고 처음에 틀렸던 이유). 재확인 비용을 아낀다.
 - `COMPARISON.md` — `composed` vs Node 부류별 손익표.
 - `AutoInvalidateProbeTest` — opt-out 동작 회귀 방지.
+
+---
+
+## 12. `@Default(String)` 검토 (구현 보류)
+
+```kotlin
+@Default("1000") var durationMillis: Int   →   fun Modifier.x(durationMillis: Int = 1000, ...)
+```
+
+- **구현 ~10줄**: 어노테이션 문자열을 `ParameterSpec.defaultValue("%L", expr)` 로 verbatim 방출. 생성 함수에만, Element 생성자는 그대로.
+- **되는 것**: 리터럴(`1000`/`0f`/`true`/`null`/`""`), 파라미터 타입의 멤버(`Color.Unspecified`, `StepSize.ONE`).
+- **안 되는 것**: 생성 파일에 import 안 된 심볼. `4.dp` 도 실패(자주 씀). → FQN 강제거나 유닛 allowlist(`.dp/.sp/.em` 자동 import) 필요.
+- **리스크**: 오타 → 생성 파일에서 컴파일 에러(어노테이션 위치 아님). 중간 위치 `@Default` → 뒤 파라미터 named 강제(경고만, 리오더 안 함).
+- **판정**: "default 없음"보다 낫고 오버로드 체인보다 단순. 권장 형태 = `@Default(String)` + non-blank 검증 + `.dp/.sp/.em` allowlist + 중간위치 경고 (~20줄). 우선순위는 README 뒤.

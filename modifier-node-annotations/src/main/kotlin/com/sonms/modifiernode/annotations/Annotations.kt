@@ -14,13 +14,13 @@ package com.sonms.modifiernode.annotations
  */
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.SOURCE)
-annotation class ModifierNodeFactory(
-    val name: String = "",
-    val visibility: GeneratedVisibility = GeneratedVisibility.Public,
+public annotation class ModifierNodeFactory(
+    public val name: String = "",
+    public val visibility: GeneratedVisibility = GeneratedVisibility.Public,
 )
 
 /** [ModifierNodeFactory.visibility] 값. Value for [ModifierNodeFactory.visibility]. */
-enum class GeneratedVisibility { Public, Internal }
+public enum class GeneratedVisibility { Public, Internal }
 
 /**
  * 이 파라미터가 바뀌었을 때 무효화할 범위. 미지정 시 노드가 구현한 모든 범위를 무효화한다.
@@ -31,7 +31,7 @@ enum class GeneratedVisibility { Public, Internal }
  */
 @Target(AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.SOURCE)
-annotation class Invalidates(vararg val scopes: InvalidationScope)
+public annotation class Invalidates(public vararg val scopes: InvalidationScope)
 
 /**
  * 무효화 범위. 계층은 [Measure] > [Placement] > [Draw] (상위 하나만 호출).
@@ -40,7 +40,7 @@ annotation class Invalidates(vararg val scopes: InvalidationScope)
  * [None] 은 무효화 없음. 생성 시점에만 쓰거나 `observeReads` 로 읽는 값에 사용한다.
  * [None] means no invalidation — for values used only on create, or read via `observeReads`.
  */
-enum class InvalidationScope { Measure, Placement, Draw, Semantics, ParentData, None }
+public enum class InvalidationScope { Measure, Placement, Draw, Semantics, ParentData, None }
 
 /**
  * 이 `Boolean` 파라미터가 `false` 면 modifier 를 적용하지 않는다 (노드 미attach).
@@ -51,7 +51,7 @@ enum class InvalidationScope { Measure, Placement, Draw, Semantics, ParentData, 
  */
 @Target(AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.SOURCE)
-annotation class SkipWhenFalse
+public annotation class SkipWhenFalse
 
 /**
  * [SkipWhenFalse] 의 반대 — 이 `Boolean` 파라미터가 `true` 면 modifier 를 적용하지 않는다.
@@ -59,7 +59,7 @@ annotation class SkipWhenFalse
  */
 @Target(AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.SOURCE)
-annotation class SkipWhenTrue
+public annotation class SkipWhenTrue
 
 /**
  * 이 파라미터가 바뀌면 생성된 `update()` 가 노드 필드 갱신 후 `on<Name>Changed()` 를 호출한다.
@@ -75,4 +75,4 @@ annotation class SkipWhenTrue
  */
 @Target(AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.SOURCE)
-annotation class OnChange
+public annotation class OnChange

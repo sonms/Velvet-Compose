@@ -64,10 +64,13 @@ class ModifierNodeProcessor(
 
         val factoryAnn = node.annotations.first { it.shortName.asString() == "ModifierNodeFactory" }
         val explicitName = (factoryAnn.argValue("name") as? String).orEmpty()
-        val funName = explicitName.ifBlank {
-            nodeName.removeSuffix("Node").replaceFirstChar { it.lowercase() }
+        val base = nodeName.removeSuffix("Node")
+        val funName = explicitName.ifBlank { base.replaceFirstChar { it.lowercase() } }
+        if (funName.isBlank()) {
+            logger.error("Cannot derive a function name from '$nodeName' — pass @ModifierNodeFactory(name = \"...\")", node)
+            return
         }
-        val elementName = "${nodeName.removeSuffix("Node")}Element"
+        val elementName = "${base.ifBlank { nodeName }}Element"
         val elementClass = ClassName(pkg, elementName)
 
         // 확장 함수 가시성: @ModifierNodeFactory(visibility=...), 기본 Public.
@@ -110,7 +113,14 @@ class ModifierNodeProcessor(
             return
         }
 
-        val params = ctor.parameters.map { p -> resolveParam(p, node, supported) }
+        var paramsValid = true
+        val params = ctor.parameters.map { p ->
+            val (param, valid) = resolveParam(p, node, supported)
+            if (!valid) paramsValid = false
+            param
+        }
+        // 하드 에러(non-var, 잘못된 마커 등)가 있으면 생성물을 만들지 않는다 — 2차 에러 방지.
+        if (!paramsValid) return
 
         // @Invalidates 는 Node 가 shouldAutoInvalidate=false 를 선언해야 실효가 있다 (ARCHITECTURE.md §10).
         // codegen 은 Node 클래스를 수정 못 하므로 여기서 요구한다.
@@ -196,10 +206,24 @@ class ModifierNodeProcessor(
         val changedCallback: String get() = "on${name.replaceFirstChar { it.uppercase() }}Changed"
     }
 
-    private fun resolveParam(p: KSValueParameter, node: KSClassDeclaration, supported: Set<Scope>): Param {
+    /** @return 파라미터 모델과, 하드 에러가 없어 생성 가능한지 여부. */
+    private fun resolveParam(p: KSValueParameter, node: KSClassDeclaration, supported: Set<Scope>): Pair<Param, Boolean> {
         val name = p.name!!.asString()
+        var valid = true
+
         if (!p.isVar) {
             logger.error("Parameter '$name' must be a 'var' property parameter", p)
+            valid = false
+        }
+
+        // 함수 타입은 equals 가 참조 동일성 → composed 와 같은 재구성 함정. 경고만.
+        val typeFqn = p.type.resolve().declaration.qualifiedName?.asString().orEmpty()
+        if (typeFqn.startsWith("kotlin.Function") || typeFqn.startsWith("kotlin.coroutines.SuspendFunction")) {
+            logger.warn(
+                "Parameter '$name' is a function type — the generated equals() uses reference identity, " +
+                    "so a fresh lambda each recomposition defeats element reuse. Hoist it or wrap in a stable holder.",
+                p,
+            )
         }
 
         val skipFalse = p.annotations.any { it.shortName.asString() == "SkipWhenFalse" }
@@ -207,9 +231,11 @@ class ModifierNodeProcessor(
         val isBoolean = p.type.resolve().declaration.qualifiedName?.asString() == "kotlin.Boolean"
         if ((skipFalse || skipTrue) && !isBoolean) {
             logger.error("@SkipWhen* requires a Boolean parameter; '$name' is not Boolean", p)
+            valid = false
         }
         if (skipFalse && skipTrue) {
             logger.error("'$name' has both @SkipWhenFalse and @SkipWhenTrue", p)
+            valid = false
         }
         val skip = when {
             skipFalse -> SkipKind.WhenFalse
@@ -225,6 +251,7 @@ class ModifierNodeProcessor(
             }
             if (!declared) {
                 logger.error("@OnChange on '$name' requires the node to declare 'fun $cb()'", p)
+                valid = false
             }
         }
 
@@ -256,7 +283,7 @@ class ModifierNodeProcessor(
                 }
             }
         }
-        return Param(name, p.type.toTypeName(), scopes, skip, onChange)
+        return Param(name, p.type.toTypeName(), scopes, skip, onChange) to valid
     }
 
     private fun createFun(nodeClass: ClassName, params: List<Param>) = FunSpec.builder("create")

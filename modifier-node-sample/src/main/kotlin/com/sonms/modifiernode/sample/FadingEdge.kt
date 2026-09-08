@@ -9,8 +9,10 @@ import androidx.compose.ui.graphics.layer.GraphicsLayer
 import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.node.DrawModifierNode
 import androidx.compose.ui.node.requireGraphicsContext
+import androidx.compose.ui.unit.toIntSize
 import com.sonms.modifiernode.annotations.Invalidates
 import com.sonms.modifiernode.annotations.InvalidationScope.Draw
+import com.sonms.modifiernode.annotations.InvalidationScope.None
 import com.sonms.modifiernode.annotations.ModifierNodeFactory
 import com.sonms.modifiernode.annotations.SkipWhenFalse
 
@@ -25,7 +27,7 @@ import com.sonms.modifiernode.annotations.SkipWhenFalse
 internal class FadingEdgeNode(
     @Invalidates(Draw) var isVertical: Boolean,
     @Invalidates(Draw) var fraction: Float,
-    @SkipWhenFalse var enabled: Boolean,
+    @SkipWhenFalse @Invalidates(None) var enabled: Boolean,
 ) : Modifier.Node(), DrawModifierNode {
 
     override val shouldAutoInvalidate: Boolean get() = false
@@ -65,7 +67,8 @@ internal class FadingEdgeNode(
             )
         }
 
-        gl.record {
+        // DrawScope 스코프의 record — drawContent() 를 레이어에 올바르게 기록한다.
+        gl.record(size.toIntSize()) {
             this@draw.drawContent()
             drawRect(brush = maskBrush, blendMode = BlendMode.DstIn)
         }
