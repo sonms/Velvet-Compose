@@ -1,0 +1,321 @@
+package com.sonms.modifiernode.processor
+
+import com.google.devtools.ksp.getAllSuperTypes
+import com.google.devtools.ksp.processing.CodeGenerator
+import com.google.devtools.ksp.processing.KSPLogger
+import com.google.devtools.ksp.processing.Resolver
+import com.google.devtools.ksp.processing.SymbolProcessor
+import com.google.devtools.ksp.symbol.KSAnnotated
+import com.google.devtools.ksp.symbol.KSAnnotation
+import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSType
+import com.google.devtools.ksp.symbol.KSValueParameter
+import com.google.devtools.ksp.validate
+import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.FileSpec
+import com.squareup.kotlinpoet.FunSpec
+import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.MemberName
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.PropertySpec
+import com.squareup.kotlinpoet.TypeSpec
+import com.squareup.kotlinpoet.ksp.toTypeName
+import com.squareup.kotlinpoet.ksp.writeTo
+
+private const val FACTORY_ANNOTATION = "com.sonms.modifiernode.annotations.ModifierNodeFactory"
+
+private val MODIFIER = ClassName("androidx.compose.ui", "Modifier")
+private val MODIFIER_NODE_ELEMENT = ClassName("androidx.compose.ui.node", "ModifierNodeElement")
+private val INSPECTOR_INFO = ClassName("androidx.compose.ui.platform", "InspectorInfo")
+private val INVALIDATE_DRAW = MemberName("androidx.compose.ui.node", "invalidateDraw")
+private val INVALIDATE_MEASUREMENT = MemberName("androidx.compose.ui.node", "invalidateMeasurement")
+private val INVALIDATE_PLACEMENT = MemberName("androidx.compose.ui.node", "invalidatePlacement")
+
+private const val DRAW_MODIFIER_NODE = "androidx.compose.ui.node.DrawModifierNode"
+private const val LAYOUT_MODIFIER_NODE = "androidx.compose.ui.node.LayoutModifierNode"
+
+/** 무효화 범위. 처리기 내부 표현. */
+private enum class Scope { Measure, Placement, Draw, Semantics, ParentData, None }
+
+class ModifierNodeProcessor(
+    private val codeGenerator: CodeGenerator,
+    private val logger: KSPLogger,
+) : SymbolProcessor {
+
+    override fun process(resolver: Resolver): List<KSAnnotated> {
+        val symbols = resolver.getSymbolsWithAnnotation(FACTORY_ANNOTATION).toList()
+        val deferred = symbols.filterNot { it.validate() }
+
+        symbols.filter { it.validate() }
+            .filterIsInstance<KSClassDeclaration>()
+            .forEach { runCatching { generate(it) }.onFailure { e -> logger.error("codegen failed: ${e.message}", it) } }
+
+        return deferred
+    }
+
+    private fun generate(node: KSClassDeclaration) {
+        val pkg = node.packageName.asString()
+        val nodeName = node.simpleName.asString()
+        val nodeClass = ClassName(pkg, nodeName)
+
+        val factoryAnn = node.annotations.first { it.shortName.asString() == "ModifierNodeFactory" }
+        val explicitName = (factoryAnn.argValue("name") as? String).orEmpty()
+        val funName = explicitName.ifBlank {
+            nodeName.removeSuffix("Node").replaceFirstChar { it.lowercase() }
+        }
+        val elementName = "${nodeName.removeSuffix("Node")}Element"
+        val elementClass = ClassName(pkg, elementName)
+
+        val visibility = if (node.isPublic()) KModifier.PUBLIC else KModifier.INTERNAL
+
+        val ctor = node.primaryConstructor
+        if (ctor == null) {
+            logger.error("@ModifierNodeFactory requires a primary constructor", node)
+            return
+        }
+
+        val supported = node.supportedScopes()
+        if (supported.isEmpty()) {
+            logger.error(
+                "@ModifierNodeFactory node must implement DrawModifierNode and/or LayoutModifierNode (MVP)",
+                node,
+            )
+            return
+        }
+
+        val params = ctor.parameters.map { p -> resolveParam(p, node, supported) }
+
+        // --- 확장 함수: fun Modifier.<name>(...): Modifier = this.then(<Name>Element(...)) ---
+        val extFun = FunSpec.builder(funName)
+            .addModifiers(visibility)
+            .receiver(MODIFIER)
+            .returns(MODIFIER)
+            .apply { params.forEach { addParameter(it.name, it.type) } }
+            .addStatement(
+                "return this.then(%T(%L))",
+                elementClass,
+                params.joinToString(", ") { it.name },
+            )
+            .build()
+
+        // --- Element 클래스 ---
+        val elementType = TypeSpec.classBuilder(elementClass)
+            .addModifiers(visibility)
+            .superclass(MODIFIER_NODE_ELEMENT.parameterizedBy(nodeClass))
+            .primaryConstructor(
+                FunSpec.constructorBuilder()
+                    .apply { params.forEach { addParameter(it.name, it.type) } }
+                    .build(),
+            )
+            .apply {
+                params.forEach {
+                    addProperty(
+                        PropertySpec.builder(it.name, it.type, KModifier.PRIVATE)
+                            .initializer(it.name)
+                            .build(),
+                    )
+                }
+            }
+            .addFunction(createFun(nodeClass, params))
+            .addFunction(updateFun(nodeClass, params))
+            .addFunction(inspectableFun(funName, params))
+            .addFunction(equalsFun(elementClass, params))
+            .addFunction(hashCodeFun(params))
+            .build()
+
+        FileSpec.builder(pkg, elementName)
+            .addFunction(extFun)
+            .addType(elementType)
+            .build()
+            .writeTo(codeGenerator, aggregating = false, originatingKSFiles = listOfNotNull(node.containingFile))
+    }
+
+    private data class Param(
+        val name: String,
+        val type: com.squareup.kotlinpoet.TypeName,
+        val scopes: Set<Scope>,
+    )
+
+    private fun resolveParam(p: KSValueParameter, node: KSClassDeclaration, supported: Set<Scope>): Param {
+        val name = p.name!!.asString()
+        if (!p.isVar) {
+            logger.error("Parameter '$name' must be a 'var' property parameter", p)
+        }
+        val invAnn = p.annotations.firstOrNull { it.shortName.asString() == "Invalidates" }
+        val scopes: Set<Scope> = when {
+            invAnn == null -> supported // 안전 기본값
+            else -> {
+                val declared = invAnn.enumArgNames("scopes").mapNotNull { runCatching { Scope.valueOf(it) }.getOrNull() }.toSet()
+                when {
+                    Scope.None in declared -> emptySet()
+                    else -> {
+                        declared.forEach { s ->
+                            val ok = when (s) {
+                                Scope.Draw -> Scope.Draw in supported
+                                Scope.Measure, Scope.Placement -> Scope.Measure in supported
+                                Scope.Semantics, Scope.ParentData ->
+                                    false.also { logger.error("@Invalidates($s) not supported yet (MVP)", p) }
+                                Scope.None -> true
+                            }
+                            if (!ok && s != Scope.Semantics && s != Scope.ParentData) {
+                                logger.error(
+                                    "@Invalidates($s) on '$name' but ${node.simpleName.asString()} does not implement the matching node interface",
+                                    p,
+                                )
+                            }
+                        }
+                        declared
+                    }
+                }
+            }
+        }
+        return Param(name, p.type.toTypeName(), scopes)
+    }
+
+    private fun createFun(nodeClass: ClassName, params: List<Param>) = FunSpec.builder("create")
+        .addModifiers(KModifier.OVERRIDE)
+        .returns(nodeClass)
+        .addStatement("return %T(%L)", nodeClass, params.joinToString(", ") { it.name })
+        .build()
+
+    private fun updateFun(nodeClass: ClassName, params: List<Param>): FunSpec {
+        val b = FunSpec.builder("update")
+            .addModifiers(KModifier.OVERRIDE)
+            .addParameter("node", nodeClass)
+
+        val anyDraw = params.any { Scope.Draw in it.scopes }
+        val anyMeasure = params.any { Scope.Measure in it.scopes }
+        val anyPlacement = params.any { Scope.Placement in it.scopes && Scope.Measure !in it.scopes }
+
+        if (anyDraw) b.addStatement("var redraw = false")
+        if (anyMeasure) b.addStatement("var remeasure = false")
+        if (anyPlacement) b.addStatement("var replace = false")
+
+        params.forEach { p ->
+            if (p.scopes.isEmpty()) {
+                b.addStatement("if (node.%N != %N) node.%N = %N", p.name, p.name, p.name, p.name)
+            } else {
+                b.beginControlFlow("if (node.%N != %N)", p.name, p.name)
+                b.addStatement("node.%N = %N", p.name, p.name)
+                if (Scope.Draw in p.scopes) b.addStatement("redraw = true")
+                if (Scope.Measure in p.scopes) b.addStatement("remeasure = true")
+                else if (Scope.Placement in p.scopes) b.addStatement("replace = true")
+                b.endControlFlow()
+            }
+        }
+
+        // 계층: Measure > Placement > Draw. 상위 하나만 호출.
+        when {
+            anyMeasure && (anyPlacement || anyDraw) -> {
+                b.beginControlFlow("if (remeasure)")
+                b.addStatement("node.%M()", INVALIDATE_MEASUREMENT)
+                if (anyPlacement) {
+                    b.nextControlFlow("else if (replace)")
+                    b.addStatement("node.%M()", INVALIDATE_PLACEMENT)
+                }
+                if (anyDraw) {
+                    b.nextControlFlow("else if (redraw)")
+                    b.addStatement("node.%M()", INVALIDATE_DRAW)
+                }
+                b.endControlFlow()
+            }
+            anyMeasure -> {
+                b.beginControlFlow("if (remeasure)")
+                b.addStatement("node.%M()", INVALIDATE_MEASUREMENT)
+                b.endControlFlow()
+            }
+            anyPlacement && anyDraw -> {
+                b.beginControlFlow("if (replace)")
+                b.addStatement("node.%M()", INVALIDATE_PLACEMENT)
+                b.nextControlFlow("else if (redraw)")
+                b.addStatement("node.%M()", INVALIDATE_DRAW)
+                b.endControlFlow()
+            }
+            anyPlacement -> {
+                b.beginControlFlow("if (replace)")
+                b.addStatement("node.%M()", INVALIDATE_PLACEMENT)
+                b.endControlFlow()
+            }
+            anyDraw -> {
+                b.beginControlFlow("if (redraw)")
+                b.addStatement("node.%M()", INVALIDATE_DRAW)
+                b.endControlFlow()
+            }
+        }
+        return b.build()
+    }
+
+    private fun inspectableFun(name: String, params: List<Param>) = FunSpec.builder("inspectableProperties")
+        .addModifiers(KModifier.OVERRIDE)
+        .receiver(INSPECTOR_INFO)
+        .addStatement("name = %S", name)
+        .apply { params.forEach { addStatement("properties[%S] = %N", it.name, it.name) } }
+        .build()
+
+    private fun equalsFun(elementClass: ClassName, params: List<Param>): FunSpec {
+        val b = FunSpec.builder("equals")
+            .addModifiers(KModifier.OVERRIDE)
+            .addParameter("other", ANY_NULLABLE)
+            .returns(Boolean::class)
+            .addStatement("if (this === other) return true")
+            .addStatement("if (other !is %T) return false", elementClass)
+        params.forEach { b.addStatement("if (%N != other.%N) return false", it.name, it.name) }
+        b.addStatement("return true")
+        return b.build()
+    }
+
+    private fun hashCodeFun(params: List<Param>): FunSpec {
+        val b = FunSpec.builder("hashCode")
+            .addModifiers(KModifier.OVERRIDE)
+            .returns(Int::class)
+        if (params.isEmpty()) {
+            b.addStatement("return %T::class.hashCode()", MODIFIER)
+            return b.build()
+        }
+        b.addStatement("var result = %N.hashCode()", params.first().name)
+        params.drop(1).forEach { b.addStatement("result = 31 * result + %N.hashCode()", it.name) }
+        b.addStatement("return result")
+        return b.build()
+    }
+
+    private fun KSClassDeclaration.supportedScopes(): Set<Scope> {
+        val supers = (listOf(this) + getAllSuperTypes().mapNotNull { it.declaration as? KSClassDeclaration })
+            .mapNotNull { it.qualifiedName?.asString() }
+            .toSet()
+        return buildSet {
+            if (DRAW_MODIFIER_NODE in supers) add(Scope.Draw)
+            if (LAYOUT_MODIFIER_NODE in supers) {
+                add(Scope.Measure)
+                add(Scope.Placement)
+            }
+        }
+    }
+
+    private fun KSClassDeclaration.isPublic(): Boolean =
+        modifiers.none { it.name == "INTERNAL" || it.name == "PRIVATE" || it.name == "PROTECTED" }
+
+    companion object {
+        private val ANY_NULLABLE = ClassName("kotlin", "Any").copy(nullable = true)
+    }
+}
+
+/** 이름 있는 인자 값 조회. */
+private fun KSAnnotation.argValue(name: String): Any? =
+    arguments.firstOrNull { it.name?.asString() == name }?.value
+
+/** enum vararg 인자를 엔트리 simpleName 리스트로. */
+private fun KSAnnotation.enumArgNames(name: String): List<String> {
+    val raw = argValue(name) ?: return emptyList()
+    val list = when (raw) {
+        is List<*> -> raw
+        is Array<*> -> raw.toList()
+        else -> listOf(raw)
+    }
+    return list.mapNotNull { entry ->
+        when (entry) {
+            is KSType -> entry.declaration.simpleName.asString()
+            is KSClassDeclaration -> entry.simpleName.asString()
+            else -> entry?.toString()?.substringAfterLast('.')
+        }
+    }
+}
