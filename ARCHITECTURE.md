@@ -152,8 +152,8 @@ invalidation 계층: `Measure` > `Placement` > `Draw` (상위 하나만 호출),
 - [x] 어노테이션 정의
 - [x] 프로세서: Element + 확장 함수 생성, invalidation 계층 접기, `var`/scope 검증
 - [x] `:modifier-node-sample` 예제 2개(`debugTint` draw 전용, `fixedSquare` draw+layout) 빌드/코드젠 확인
+- [x] `fadingEdge` 재작성 (§9 참고)
 - [ ] invalidation 계약 테스트 헬퍼
-- [ ] `fadingEdge` 재작성
 - [ ] 기본값(default argument) 처리 — 현재 미지원, 호출부에서 전 인자 전달 필요
 
 ### 한계 (MVP 구현상)
@@ -199,3 +199,42 @@ MVP 완료 후 아래를 근거로 **계속 / 중단**을 판단한다.
 - 프로젝트: Kotlin 2.0.21, AGP 8.13.2, Compose BOM 2026.04.01
 - KSP 버전은 Kotlin 2.0.21 에 정렬 (`2.0.21-1.0.x`)
 - 첫 dogfooding 대상: `wheelpicker/src/main/java/com/sonms/wheelpicker/extension/ModifierExt.kt`
+
+---
+
+## 9. Dogfooding 결과 — `fadingEdge`
+
+`modifier-node-sample/.../FadingEdge.kt` (`FadingEdgeNode`) + 생성된 `FadingEdgeElement`.
+
+### LOC
+
+| | 원본 | Node 판 |
+|---|---|---|
+| 손으로 쓴 코드 | 함수 1개, 로직 ~30줄 | `FadingEdgeNode` ~55줄 (lifecycle 포함) |
+| 생성 코드 | 0 | `FadingEdgeElement` ~65줄 (무료) |
+| **총 손 코드** | **~30줄** | **~55줄** |
+
+손으로 쓴 코드가 오히려 늘었다.
+
+### 핵심 발견 (결정 게이트에 반영)
+
+1. **`fadingEdge` 는 애초에 `composed` 를 안 썼다.** 원본은
+   `graphicsLayer { }.drawWithCache { }` 체인 — 둘 다 이미 `Modifier.Node` 기반이고
+   `equals` 도 제대로 되는 modifier다. 이걸 raw 노드로 내리면:
+   - `GraphicsLayer` lifecycle 을 수동 관리 (`onAttach`/`onDetach`)
+   - `drawWithCache` 의 브러시 캐싱을 잃음 (record 블록에서 매번 재계산)
+   - → **순 손해.**
+2. 즉 이 codegen 의 가치는 **"원래라면 `composed` 를 썼을 상황"** 에서만 나온다:
+   CompositionLocal 읽기, `InteractionSource`, 코루틴 기반 애니메이션을 modifier 안에서 다룰 때.
+   composition-free modifier 체인을 raw 노드로 재작성하는 건 안티패턴.
+3. **조건부 적용 표현 불가.** 원본의 `enabled=false` → early return (modifier 미적용).
+   현재 codegen 은 `this.then(Element(...))` 를 무조건 생성 → 노드가 파라미터를 보고
+   no-op 하는 우회만 가능, disabled 상태에서도 노드/레이어 attach.
+   → 확장 함수 본문에 `if` 를 넣는 옵션(`@ModifierNodeFactory(skipWhen = ...)` 류)이 필요.
+
+### 판정 관련
+
+- 계속 조건 1 ("`fadingEdge` 가 원본보다 읽기 쉽거나 동등") → **불충족.** 단 이는
+  대상 선정 실수(§9-1). `composed` 를 실제로 쓰는 케이스로 다시 검증해야 공정하다.
+- 다음 dogfood 후보: CompositionLocal / InteractionSource 를 읽는 modifier 를
+  `:modifier-node-sample` 에 새로 하나 만들어 비교.
