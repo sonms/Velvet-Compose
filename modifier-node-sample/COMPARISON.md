@@ -10,7 +10,7 @@
 | | composed | Node(손) | codegen 없이 Node(손) | 생성물 |
 |---|---:|---:|---:|---:|
 | Case A | ~7 | **~10** | ~55 | ~46 |
-| Case B | ~10 | **~40** | ~85 | ~53 |
+| Case B | ~10 | **~35** | ~85 | ~53 |
 
 ---
 
@@ -80,20 +80,18 @@ fun Modifier.pressScaleComposed(
 @ModifierNodeFactory(name = "pressScale")
 internal class PressScaleNode(
     @Invalidates(Draw) var pressedScale: Float,
-    @Invalidates(None) var interactionSource: InteractionSource,
+    @Invalidates(None) @OnChange var interactionSource: InteractionSource,
 ) : Modifier.Node(), DrawModifierNode {
 
     private val scaleAnim = Animatable(1f)
     private var collectJob: Job? = null
-    private var boundSource: InteractionSource? = null
 
-    override fun onAttach() = rebind()
-    override fun onDetach() { collectJob?.cancel(); collectJob = null; boundSource = null }
+    override fun onAttach() = subscribe()
+    override fun onDetach() { collectJob?.cancel(); collectJob = null }
+    fun onInteractionSourceChanged() = subscribe()   // 생성된 update() 가 호출
 
-    private fun rebind() {
-        if (boundSource === interactionSource) return
+    private fun subscribe() {
         collectJob?.cancel()
-        boundSource = interactionSource
         collectJob = coroutineScope.launch {
             val presses = ArrayList<PressInteraction.Press>()
             interactionSource.interactions.collect { i ->
@@ -108,22 +106,19 @@ internal class PressScaleNode(
     }
 
     override fun ContentDrawScope.draw() {
-        rebind()                       // ← codegen update 가 대입만 하므로 수동 재구독 확인
         val s = scaleAnim.value        // snapshot 상태 → 프레임마다 자동 redraw
         scale(s, s, center) { this@draw.drawContent() }
     }
 }
 ```
 
-### 판정 B — **codegen 만으로는 부족**
+### 판정 B — codegen + `@OnChange` 로 격차 축소
 
-- 손 코드 10 → 40줄. codegen 이 Element(~50줄)를 없앴지만, interaction+animation 의
-  **노드 행동 코드 자체가 `composed` 보다 훨씬 장황**하다.
-- **새 한계 발견:** `interactionSource` 파라미터가 바뀔 때 재구독하려면 훅이 필요한데,
-  codegen 의 `update` 는 `node.x = x` 대입만 한다. 여기서는 `draw()` 진입 시 `rebind()`
-  수동 호출로 우회 — 지저분하다. → `update` 후 `node.onUpdated()` 를 부르거나,
-  `@Invalidates` 에 "재바인드" 개념(예: `@OnChange`)이 필요.
-- `Animatable` / press 카운팅 보일러플레이트는 codegen 범위 밖. 별도 노드 유틸이 있어야 함.
+- 손 코드 10 → ~35줄. Element(~50줄) + 재구독 dedup(`boundSource` 필드, `draw()` 의 `rebind()`)
+  이 사라졌다. 남은 장황함은 `Animatable` / press 카운팅 — 진짜 노드 행동 코드다.
+- `@OnChange var interactionSource` → 생성된 `update()` 가 필드 갱신 후 `onInteractionSourceChanged()`
+  를 호출한다. `composed` 의 `remember(key)` 재구독에 대응.
+- `Animatable` / press 카운팅 보일러플레이트는 여전히 codegen 범위 밖 (노드 유틸이 있으면 더 줄겠지만 별개).
 
 ---
 
@@ -132,12 +127,12 @@ internal class PressScaleNode(
 | 모디파이어 부류 | codegen 효과 |
 |---|---|
 | **값(파라미터/CompositionLocal) 읽고 draw/measure 에서 반응** — 커스텀 모디파이어의 다수 | **결정적.** 7→10 vs 7→55. `composed` 를 벗어나게 해줌 |
-| **interaction / coroutine / animation** | Element 제거는 도움되지만 균형을 못 뒤집음. `onUpdate` 훅 + 노드 유틸 필요 |
-| 모든 부류 공통 | 안정 equals·inspector·`@Invalidates` 정합성 체크·(예정) ABI 표면 축소 |
+| **interaction / coroutine / animation** | `@OnChange` 로 재구독 격차 축소(10→35). 남은 장황함(`Animatable`/카운팅)은 진짜 노드 코드 |
+| 모든 부류 공통 | 안정 equals·inspector·`@Invalidates` 정합성 체크·ABI 표면 축소·`@SkipWhen*` 가드 |
 
 **결정 게이트 조건 1** ("재작성이 원본보다 낫거나 동등"): `fadingEdge`(§ARCHITECTURE 9)로는 불충족이었으나
-그건 애초에 `composed` 케이스가 아니었음. **Case A 로 재평가 시 충족.** Case B 는 codegen 의
-경계를 명확히 보여줌 — 라이브러리화하면 `onUpdate` 훅을 v1.1 스코프에 넣어야 한다.
+그건 애초에 `composed` 케이스가 아니었음. **Case A 로 재평가 시 충족.** Case B 도 `@OnChange` 이후엔
+근접(값 읽기 케이스만큼 결정적이진 않음).
 
 ---
 

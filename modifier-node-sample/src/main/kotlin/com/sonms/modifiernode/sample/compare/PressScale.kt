@@ -16,6 +16,7 @@ import com.sonms.modifiernode.annotations.Invalidates
 import com.sonms.modifiernode.annotations.InvalidationScope.Draw
 import com.sonms.modifiernode.annotations.InvalidationScope.None
 import com.sonms.modifiernode.annotations.ModifierNodeFactory
+import com.sonms.modifiernode.annotations.OnChange
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -36,37 +37,31 @@ fun Modifier.pressScaleComposed(
 }
 
 /**
- * AFTER — 같은 효과를 `Modifier.Node` 로.
- *
- * `interactionSource` 가 바뀌면 재구독이 필요한데 생성된 `update()` 는 필드 대입만 한다 →
- * [draw] 진입 시 [rebind] 로 수동 확인 (§10 Case B, `onUpdate` 훅 도입 전까지의 우회).
+ * AFTER — 같은 효과를 `Modifier.Node` 로. `interactionSource` 는 `@OnChange` — 바뀌면
+ * 생성된 `update()` 가 [onInteractionSourceChanged] 를 불러 재구독한다.
  */
 @ModifierNodeFactory(name = "pressScale")
 internal class PressScaleNode(
     @Invalidates(Draw) var pressedScale: Float,
-    @Invalidates(None) var interactionSource: InteractionSource,
+    @Invalidates(None) @OnChange var interactionSource: InteractionSource,
 ) : Modifier.Node(), DrawModifierNode {
 
     override val shouldAutoInvalidate: Boolean get() = false
 
     private val scaleAnim = Animatable(1f)
     private var collectJob: Job? = null
-    private var boundSource: InteractionSource? = null
 
-    override fun onAttach() {
-        rebind()
-    }
+    override fun onAttach() = subscribe()
 
     override fun onDetach() {
         collectJob?.cancel()
         collectJob = null
-        boundSource = null
     }
 
-    private fun rebind() {
-        if (boundSource === interactionSource) return
+    fun onInteractionSourceChanged() = subscribe()
+
+    private fun subscribe() {
         collectJob?.cancel()
-        boundSource = interactionSource
         collectJob = coroutineScope.launch {
             val presses = ArrayList<PressInteraction.Press>()
             interactionSource.interactions.collect { interaction ->
@@ -82,7 +77,6 @@ internal class PressScaleNode(
     }
 
     override fun ContentDrawScope.draw() {
-        rebind()
         val s = scaleAnim.value // snapshot 상태 → 애니메이션 프레임마다 자동 redraw
         scale(s, s, center) {
             this@draw.drawContent()

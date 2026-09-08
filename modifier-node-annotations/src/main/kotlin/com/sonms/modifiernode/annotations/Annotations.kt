@@ -60,3 +60,19 @@ annotation class SkipWhenFalse
 @Target(AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.SOURCE)
 annotation class SkipWhenTrue
+
+/**
+ * 이 파라미터가 바뀌면 생성된 `update()` 가 노드 필드 갱신 후 `on<Name>Changed()` 를 호출한다.
+ * When this parameter changes, the generated `update()` calls `on<Name>Changed()` after updating the node field.
+ *
+ * 노드는 인자 없이 `Unit` 을 반환하는 `fun on<Name>Changed()` 를 선언해야 한다.
+ * The node must declare `fun on<Name>Changed()` taking no arguments and returning `Unit`.
+ * 예: `interactionSource` → `fun onInteractionSourceChanged()`.
+ * e.g. `interactionSource` → `fun onInteractionSourceChanged()`.
+ *
+ * 콜백 시점에는 노드 필드가 이미 새 값이다. 코루틴 재구독, effect 재시작 등에 쓴다.
+ * The node field already holds the new value when the callback runs. Use it to re-subscribe a coroutine, restart an effect, etc.
+ */
+@Target(AnnotationTarget.VALUE_PARAMETER)
+@Retention(AnnotationRetention.SOURCE)
+annotation class OnChange

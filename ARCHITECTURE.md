@@ -250,7 +250,7 @@ MVP 완료 후 아래를 근거로 **계속 / 중단**을 판단한다.
 | 모디파이어 부류 | codegen 효과 |
 |---|---|
 | 값(파라미터/CompositionLocal) 읽고 draw/measure 에서 반응 | **결정적** — 손 코드 7→10 vs codegen 없이 7→55 |
-| interaction / coroutine / animation | Element 제거는 도움되나 균형 못 뒤집음. `onUpdate` 훅 + 노드 유틸 필요 |
+| interaction / coroutine / animation | `@OnChange` 로 재구독 격차 축소(10→35). 남은 장황함은 진짜 노드 코드 |
 
 ### 10.1 autoInvalidate 조사 — 처음 결론이 틀렸다 (정정)
 
@@ -330,7 +330,7 @@ codegen 은 정밀한 `update()` (계층 접기 포함)를 생성한다. `Modifi
 
 | 조건 | 결과 |
 |---|---|
-| 1. 재작성이 원본보다 낫거나 동등 | **부분 충족** — Case A(값 읽기) 이득, Case B(interaction) 아님, composition-free 는 손해 |
+| 1. 재작성이 원본보다 낫거나 동등 | **대체로 충족** — Case A(값 읽기) 명백한 이득, Case B(interaction)도 `@OnChange` 이후 근접, composition-free 는 여전히 손해 |
 | 2. invalidation 계약이 손보다 명확한 이점 | **조건부 충족** — 작동하고(§10.2), KSP 가 `shouldAutoInvalidate` 강제(§10.3), 계약을 테스트로 고정. 단 이득 범위가 좁다(§10.5) |
 | 3. KSP 구현 비용이 시간 단위 | **충족** — 전체 반나절 |
 
@@ -353,8 +353,12 @@ invalidation"*. 성능은 부차적 셀링포인트로만, 과장 없이. 이미
    - skip 시 노드 미attach. "사라지는 애니메이션" 은 불가 → 그 경우 마커 없이 노드가 no-op
    - `skipWhenFalse_gates_application` 테스트 (`Modifier.skipProbe(on=false) === Modifier`)
    - `fadingEdge` dogfood 를 `@SkipWhenFalse enabled` 로 갱신
-3. `onUpdate` 훅 — interaction/re-subscribe (§10 Case B) ← 다음
-4. default argument 지원 검토
+3. **`@OnChange` 마커 — 파라미터 변경 시 `on<Name>Changed()` 호출** ✅ 완료
+   - 생성된 `update()` 가 필드 갱신 후 노드의 `on<Name>Changed()` 호출 (변경 시에만)
+   - KSP 가 `fun on<Name>Changed()` (무인자) 선언을 요구
+   - `PressScaleNode` 를 이걸로 갱신 → `boundSource` dedup 필드 + `draw()` 의 `rebind()` 제거
+   - `onChange_fires_only_when_param_changes` 테스트
+4. default argument 지원 검토 ← 다음
 5. README 에 §5 한계 + §10.5 성능 현실 명시
 
 **A. 중단.** (보류) 니치가 좁고 파라미터 단위 이득이 미미하다고 보면 유효했던 선택.

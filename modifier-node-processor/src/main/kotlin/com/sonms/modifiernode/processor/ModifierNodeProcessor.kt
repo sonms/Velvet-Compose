@@ -190,7 +190,11 @@ class ModifierNodeProcessor(
         val type: com.squareup.kotlinpoet.TypeName,
         val scopes: Set<Scope>,
         val skip: SkipKind?,
-    )
+        val onChange: Boolean,
+    ) {
+        /** `@OnChange` 콜백 이름. e.g. `interactionSource` → `onInteractionSourceChanged`. */
+        val changedCallback: String get() = "on${name.replaceFirstChar { it.uppercase() }}Changed"
+    }
 
     private fun resolveParam(p: KSValueParameter, node: KSClassDeclaration, supported: Set<Scope>): Param {
         val name = p.name!!.asString()
@@ -212,6 +216,18 @@ class ModifierNodeProcessor(
             skipTrue -> SkipKind.WhenTrue
             else -> null
         }
+
+        val onChange = p.annotations.any { it.shortName.asString() == "OnChange" }
+        if (onChange) {
+            val cb = "on${name.replaceFirstChar { it.uppercase() }}Changed"
+            val declared = node.getAllFunctions().any { fn ->
+                fn.simpleName.asString() == cb && fn.parameters.isEmpty()
+            }
+            if (!declared) {
+                logger.error("@OnChange on '$name' requires the node to declare 'fun $cb()'", p)
+            }
+        }
+
         val invAnn = p.annotations.firstOrNull { it.shortName.asString() == "Invalidates" }
         val scopes: Set<Scope> = when {
             invAnn == null -> supported // 안전 기본값
@@ -240,7 +256,7 @@ class ModifierNodeProcessor(
                 }
             }
         }
-        return Param(name, p.type.toTypeName(), scopes, skip)
+        return Param(name, p.type.toTypeName(), scopes, skip, onChange)
     }
 
     private fun createFun(nodeClass: ClassName, params: List<Param>) = FunSpec.builder("create")
@@ -263,7 +279,7 @@ class ModifierNodeProcessor(
         if (anyPlacement) b.addStatement("var replace = false")
 
         params.forEach { p ->
-            if (p.scopes.isEmpty()) {
+            if (p.scopes.isEmpty() && !p.onChange) {
                 b.addStatement("if (node.%N != %N) node.%N = %N", p.name, p.name, p.name, p.name)
             } else {
                 b.beginControlFlow("if (node.%N != %N)", p.name, p.name)
@@ -271,6 +287,7 @@ class ModifierNodeProcessor(
                 if (Scope.Draw in p.scopes) b.addStatement("redraw = true")
                 if (Scope.Measure in p.scopes) b.addStatement("remeasure = true")
                 else if (Scope.Placement in p.scopes) b.addStatement("replace = true")
+                if (p.onChange) b.addStatement("node.%N()", p.changedCallback)
                 b.endControlFlow()
             }
         }

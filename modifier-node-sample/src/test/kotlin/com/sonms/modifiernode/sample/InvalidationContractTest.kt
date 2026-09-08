@@ -17,6 +17,7 @@ import com.sonms.modifiernode.annotations.Invalidates
 import com.sonms.modifiernode.annotations.InvalidationScope.Draw
 import com.sonms.modifiernode.annotations.InvalidationScope.Measure
 import com.sonms.modifiernode.annotations.ModifierNodeFactory
+import com.sonms.modifiernode.annotations.OnChange
 import com.sonms.modifiernode.annotations.SkipWhenFalse
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotSame
@@ -67,6 +68,19 @@ internal class SkipProbeNode(
     override fun ContentDrawScope.draw() = drawContent()
 }
 
+object OnChangeCount {
+    var value = 0
+}
+
+@ModifierNodeFactory(name = "onChangeProbe")
+internal class OnChangeProbeNode(
+    @OnChange @Invalidates(Draw) var key: Int,
+) : Modifier.Node(), DrawModifierNode {
+    override val shouldAutoInvalidate: Boolean get() = false
+    fun onKeyChanged() { OnChangeCount.value++ }
+    override fun ContentDrawScope.draw() = drawContent()
+}
+
 /** equals 스킵과 `@SkipWhenFalse` 가드. Element 가 equal 이면 Compose 는 `update()` 를 부르지 않는다. */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -99,5 +113,21 @@ class InvalidationContractTest {
     fun skipWhenFalse_gates_application() {
         assertSame(Modifier, Modifier.skipProbe(on = false, tag = 0))
         assertNotSame(Modifier, Modifier.skipProbe(on = true, tag = 0))
+    }
+
+    @Test
+    fun onChange_fires_only_when_param_changes() {
+        val key = mutableIntStateOf(0)
+        rule.setContent { Box(Modifier.size(24.dp).onChangeProbe(key.intValue)) }
+        rule.waitForIdle()
+        OnChangeCount.value = 0
+
+        key.intValue = 1
+        rule.waitForIdle()
+        assertEquals(1, OnChangeCount.value)
+
+        key.intValue = 1 // 같은 값 → update() 미호출
+        rule.waitForIdle()
+        assertEquals(1, OnChangeCount.value)
     }
 }
