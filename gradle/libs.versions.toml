@@ -40,6 +40,7 @@ ksp-symbol-processing-api = { group = "com.google.devtools.ksp", name = "symbol-
 kotlinpoet = { group = "com.squareup", name = "kotlinpoet", version.ref = "kotlinpoet" }
 kotlinpoet-ksp = { group = "com.squareup", name = "kotlinpoet-ksp", version.ref = "kotlinpoet" }
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
+kotlin-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect", version.ref = "kotlin" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

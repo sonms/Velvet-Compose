@@ -67,7 +67,30 @@ class ModifierNodeProcessor(
         val elementName = "${nodeName.removeSuffix("Node")}Element"
         val elementClass = ClassName(pkg, elementName)
 
-        val visibility = if (node.isPublic()) KModifier.PUBLIC else KModifier.INTERNAL
+        // 확장 함수 가시성: @ModifierNodeFactory(visibility=...), 기본 Public.
+        val funVisibility = when (factoryAnn.enumArgName("visibility")) {
+            "Internal" -> KModifier.INTERNAL
+            else -> KModifier.PUBLIC
+        }
+        // Element 는 노드 가시성과 무관하게 항상 internal (ABI 표면에서 제외).
+        val elementVisibility = KModifier.INTERNAL
+
+        // Node 가시성 검증.
+        when {
+            node.isPrivate() -> {
+                logger.error(
+                    "@ModifierNodeFactory node must not be private — the generated $elementName " +
+                        "(separate file) cannot reference it. Use 'internal'.",
+                    node,
+                )
+                return
+            }
+            node.isPublic() -> logger.warn(
+                "@ModifierNodeFactory node '$nodeName' is public → it is part of your binary API. " +
+                    "Make it 'internal' so only Modifier.$funName(...) is exposed.",
+                node,
+            )
+        }
 
         val ctor = node.primaryConstructor
         if (ctor == null) {
@@ -106,7 +129,7 @@ class ModifierNodeProcessor(
 
         // --- 확장 함수: fun Modifier.<name>(...): Modifier = this.then(<Name>Element(...)) ---
         val extFun = FunSpec.builder(funName)
-            .addModifiers(visibility)
+            .addModifiers(funVisibility)
             .receiver(MODIFIER)
             .returns(MODIFIER)
             .apply { params.forEach { addParameter(it.name, it.type) } }
@@ -119,7 +142,7 @@ class ModifierNodeProcessor(
 
         // --- Element 클래스 ---
         val elementType = TypeSpec.classBuilder(elementClass)
-            .addModifiers(visibility)
+            .addModifiers(elementVisibility)
             .superclass(MODIFIER_NODE_ELEMENT.parameterizedBy(nodeClass))
             .primaryConstructor(
                 FunSpec.constructorBuilder()
@@ -313,6 +336,9 @@ class ModifierNodeProcessor(
     private fun KSClassDeclaration.isPublic(): Boolean =
         modifiers.none { it.name == "INTERNAL" || it.name == "PRIVATE" || it.name == "PROTECTED" }
 
+    private fun KSClassDeclaration.isPrivate(): Boolean =
+        modifiers.any { it.name == "PRIVATE" }
+
     /** Node 클래스가 자체적으로 `shouldAutoInvalidate` 를 override 선언했는지 (값 false 여부는 신뢰). */
     private fun nodeDeclaresShouldAutoInvalidate(node: KSClassDeclaration): Boolean =
         node.getDeclaredProperties().any { it.simpleName.asString() == "shouldAutoInvalidate" }
@@ -325,6 +351,14 @@ class ModifierNodeProcessor(
 /** 이름 있는 인자 값 조회. */
 private fun KSAnnotation.argValue(name: String): Any? =
     arguments.firstOrNull { it.name?.asString() == name }?.value
+
+/** 단일 enum 인자를 엔트리 simpleName 으로 (없으면 null). */
+private fun KSAnnotation.enumArgName(name: String): String? = when (val raw = argValue(name)) {
+    is KSType -> raw.declaration.simpleName.asString()
+    is KSClassDeclaration -> raw.simpleName.asString()
+    null -> null
+    else -> raw.toString().substringAfterLast('.')
+}
 
 /** enum vararg 인자를 엔트리 simpleName 리스트로. */
 private fun KSAnnotation.enumArgNames(name: String): List<String> {

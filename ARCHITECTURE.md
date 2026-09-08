@@ -336,20 +336,26 @@ codegen 은 정밀한 `update()` (계층 접기 포함)를 생성한다. `Modifi
 
 ### 갈래
 
-**B. 정직한 재정의 (권장).**
+**→ B 확정 (2026-09-08).**
+
+**B. 정직한 재정의.**
 명제: *"`Modifier.Node` 보일러플레이트 제거 + equals 안정성 보장 + (opt-in) 파라미터 단위
 invalidation"*. 성능은 부차적 셀링포인트로만, 과장 없이. 이미 만든 인프라가 거의 그대로 완성형.
-남은 작업:
-- ABI: Element/Node `internal` 은닉 + 함수만 공개
-- `@ModifierNodeFactory(skipWhen=)` — 조건부 적용 (§9-3)
-- `onUpdate` 훅 — interaction/re-subscribe (§10 Case B)
-- default argument 지원 검토
-- README 에 §5 한계 + §10.5 성능 현실 명시
 
-**A. 중단.** 니치가 좁고 파라미터 단위 이득이 미미하다고 보면 여전히 유효한 선택.
-지식(§10)은 문서로 남긴다.
+남은 작업 (순서):
+1. **ABI: Element `internal` 강제 + 공개 함수 visibility 제어** ✅ 완료
+   - `<Name>Element` 는 노드 가시성과 무관하게 항상 `internal` (`generated_element_is_internal` 테스트)
+   - `@ModifierNodeFactory(visibility = GeneratedVisibility.Public | Internal)`, 기본 `Public`
+   - Node 가 `private` 면 에러(생성 파일에서 참조 불가), `public` 이면 "ABI 노출" 경고
+   - `public fun Modifier.foo()` 본문이 `internal` Element 를 참조 — Kotlin 허용(시그니처만 노출 검사)
+2. `@ModifierNodeFactory(skipWhen=)` — 조건부 적용 (§9-3) ← 다음
+3. `onUpdate` 훅 — interaction/re-subscribe (§10 Case B)
+4. default argument 지원 검토
+5. README 에 §5 한계 + §10.5 성능 현실 명시
 
-**C. 목표 전환.** "Modifier.Node 를 쉽게" 로 확장 (노드 유틸/delegation/테스트). 작업량 큼.
+**A. 중단.** (보류) 니치가 좁고 파라미터 단위 이득이 미미하다고 보면 유효했던 선택.
+
+**C. 목표 전환.** (보류) "Modifier.Node 를 쉽게" 로 확장 (노드 유틸/delegation/테스트). 작업량 큼.
 
 ### 남길 것 (어느 갈래든)
 - `ARCHITECTURE.md` §10 — autoInvalidate 메커니즘 + `shouldAutoInvalidate` opt-out 사실관계

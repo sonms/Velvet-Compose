@@ -20,7 +20,15 @@ package com.sonms.modifiernode.annotations
 annotation class ModifierNodeFactory(
     /** 생성될 확장 함수 이름. 비우면 `<NodeClassName>` 에서 `Node` 접미사를 떼고 첫 글자를 소문자로 바꿔 유도한다. */
     val name: String = "",
+    /**
+     * 생성될 `Modifier.<name>(...)` 확장 함수의 가시성.
+     * 생성된 `<Name>Element` 는 이 값과 무관하게 항상 `internal` 이다 (ABI 표면에서 제외).
+     */
+    val visibility: GeneratedVisibility = GeneratedVisibility.Public,
 )
+
+/** [ModifierNodeFactory.visibility] 값. */
+enum class GeneratedVisibility { Public, Internal }
 
 /**
  * 이 파라미터가 바뀌었을 때 트리거할 무효화 범위.

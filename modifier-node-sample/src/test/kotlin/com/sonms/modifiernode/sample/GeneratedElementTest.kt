@@ -7,6 +7,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import kotlin.reflect.KVisibility
 
 /**
  * codegen 이 실제로 보장하는 계약을 고정한다 — Compose 런타임 불필요.
@@ -57,6 +58,13 @@ class GeneratedElementTest {
     fun create_seeds_node_from_element_args() {
         val node = DebugTintElement(Color.Green).create()
         assertEquals(Color.Green, node.color)
+    }
+
+    /** ABI: 생성된 Element 는 노드 가시성과 무관하게 internal (공개 API 표면에서 제외). */
+    @Test
+    fun generated_element_is_internal() {
+        assertEquals(KVisibility.INTERNAL, DebugTintElement::class.visibility)
+        assertEquals(KVisibility.INTERNAL, FixedSquareElement::class.visibility)
     }
 
     private fun mkDp(v: Int) = androidx.compose.ui.unit.Dp(v.toFloat())
