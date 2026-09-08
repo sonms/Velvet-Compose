@@ -16,24 +16,11 @@ import com.sonms.modifiernode.annotations.InvalidationScope.Measure
 import com.sonms.modifiernode.annotations.ModifierNodeFactory
 
 /**
- * 컨텐츠 위에 색을 덧칠하는 draw 전용 노드.
- * Draw-only node that tints the content with a color.
- */
-@ModifierNodeFactory(name = "debugTint")
-internal class DebugTintNode(
-    @Invalidates(Draw) var color: Color,
-) : Modifier.Node(), DrawModifierNode {
-    override val shouldAutoInvalidate: Boolean get() = false
-
-    override fun ContentDrawScope.draw() {
-        drawContent()
-        drawRect(color)
-    }
-}
-
-/**
  * 정사각형 크기로 강제하고 그 위에 색을 덧칠하는 draw + layout 노드.
+ * `side` 변경은 remeasure, `overlay` 변경은 redraw 만 — 생성된 `update()` 의 계층 접기 예.
+ *
  * Draw + layout node that forces a square size and tints over it.
+ * Changing `side` remeasures; changing `overlay` only redraws — shows the generated `update()` folding.
  */
 @ModifierNodeFactory(name = "fixedSquare")
 internal class FixedSquareNode(

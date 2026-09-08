@@ -19,6 +19,7 @@ import com.sonms.modifiernode.annotations.InvalidationScope.Measure
 import com.sonms.modifiernode.annotations.ModifierNodeFactory
 import com.sonms.modifiernode.annotations.OnChange
 import com.sonms.modifiernode.annotations.SkipWhenFalse
+import com.sonms.modifiernode.annotations.SkipWhenTrue
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotSame
 import org.junit.Assert.assertSame
@@ -62,6 +63,7 @@ internal class ProbeNode(
 @ModifierNodeFactory(name = "skipProbe")
 internal class SkipProbeNode(
     @SkipWhenFalse var on: Boolean,
+    @SkipWhenTrue var hidden: Boolean,
     @Invalidates(Draw) var tag: Int,
 ) : Modifier.Node(), DrawModifierNode {
     override val shouldAutoInvalidate: Boolean get() = false
@@ -110,9 +112,13 @@ class InvalidationContractTest {
     }
 
     @Test
-    fun skipWhenFalse_gates_application() {
-        assertSame(Modifier, Modifier.skipProbe(on = false, tag = 0))
-        assertNotSame(Modifier, Modifier.skipProbe(on = true, tag = 0))
+    fun skip_markers_gate_application() {
+        // 적용: on=true 이고 hidden=false
+        assertNotSame(Modifier, Modifier.skipProbe(on = true, hidden = false, tag = 0))
+        // @SkipWhenFalse: on=false → skip
+        assertSame(Modifier, Modifier.skipProbe(on = false, hidden = false, tag = 0))
+        // @SkipWhenTrue: hidden=true → skip
+        assertSame(Modifier, Modifier.skipProbe(on = true, hidden = true, tag = 0))
     }
 
     @Test
