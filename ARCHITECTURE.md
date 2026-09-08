@@ -212,7 +212,7 @@ Velvet-Compose 내부 인프라 + `Modifier.Node` 학습 목적. 1인 유지보�
 
 ## 부록 A — `@Default(String)` 검토 (구현 보류)
 
-```kotlin
+```
 @Default("1000") var durationMillis: Int   →   fun Modifier.x(durationMillis: Int = 1000, ...)
 ```
 
