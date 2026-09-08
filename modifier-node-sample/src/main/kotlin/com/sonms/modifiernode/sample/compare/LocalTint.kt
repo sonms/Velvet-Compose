@@ -53,6 +53,8 @@ fun Modifier.accentOverlayComposed(alpha: Float): Modifier = composed {
 internal class AccentOverlayNode(
     @Invalidates(Draw) var alpha: Float,
 ) : Modifier.Node(), DrawModifierNode, CompositionLocalConsumerModifierNode {
+    override val shouldAutoInvalidate: Boolean get() = false
+
     override fun ContentDrawScope.draw() {
         val color = currentValueOf(LocalAccentColor)
         drawContent()

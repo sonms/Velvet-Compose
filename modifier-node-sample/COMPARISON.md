@@ -141,13 +141,18 @@ internal class PressScaleNode(
 
 ---
 
-## ⚠️ 그 뒤 발견 — invalidation 스코프는 작동하지 않는다
+## ⚠️ 그 뒤 발견 — invalidation 스코프는 **작동한다** (앞선 정정)
 
-`ARCHITECTURE.md` §10 참고. `NodeChain.updateNode` 바이트코드상 `update()` 직후
-`autoInvalidateUpdatedNode()` 가 무조건 실행되어 노드의 모든 capability 를 무효화한다.
-억제 수단 `Modifier.Node.shouldAutoInvalidate` 는 Element 가 아니라 Node 쪽이고 Compose 1.12
-에서 deprecated. **따라서 위 "종합" 표의 "모든 부류 공통: `@Invalidates` 정합성 체크" 는
-컴파일 타임 lint 로만 유효하고 런타임 성능 효과는 없다.**
+`ARCHITECTURE.md` §10 참고. 한때 "작동 안 함" 이라 적었으나 **오독이었다**:
 
-codegen 이 실제로 주는 것은 (1) 보일러플레이트 제거 (2) equals 스킵을 보장하는 정확한
-`equals`/`hashCode`. → 라이브러리 명제 재검토는 `ARCHITECTURE.md` §11.
+- `NodeKind.autoInvalidateNodeSelf` 에 opt-out 이 있다:
+  `if (phase == Updated && !node.shouldAutoInvalidate) return`
+- `Modifier.Node.shouldAutoInvalidate` 는 deprecated 아님. Compose 의 `graphicsLayer`/`paint`
+  모디파이어가 이 패턴을 쓴다.
+- 통제 실험(`AutoInvalidateProbeTest`): `shouldAutoInvalidate = false` 노드는 draw 전용
+  파라미터 변경 시 remeasure 안 함.
+
+제약: codegen 이 Node 클래스에 그 한 줄을 못 넣으므로, `@Invalidates` 사용 시 KSP 가
+`override val shouldAutoInvalidate get() = false` 를 요구한다(없으면 컴파일 에러).
+
+단 성능 이득 범위는 좁다 (§10.5). 주된 가치는 여전히 보일러플레이트 제거 + equals 안정성.

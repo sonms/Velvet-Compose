@@ -1,6 +1,7 @@
 package com.sonms.modifiernode.processor
 
 import com.google.devtools.ksp.getAllSuperTypes
+import com.google.devtools.ksp.getDeclaredProperties
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
@@ -85,12 +86,23 @@ class ModifierNodeProcessor(
 
         val params = ctor.parameters.map { p -> resolveParam(p, node, supported) }
 
-        // 주의: Compose 는 update() 직후 autoInvalidateUpdatedNode() 로 노드의 모든 capability 를
-        // 무조건 무효화한다(NodeChain.updateNode). 유일한 억제 수단인 Modifier.Node.shouldAutoInvalidate
-        // 는 (1) Element 가 아니라 Node 쪽 프로퍼티라 codegen 이 주입 못 하고 (2) Compose 1.12 에서
-        // @Deprecated 다. 따라서 생성된 update() 의 세분화된 invalidate 호출은 사실상 "이중" 이며
-        // 런타임 최적화 효과가 없다. @Invalidates 는 현재 컴파일 타임 검증 용도로만 의미가 있다.
-        // 자세한 내용: ARCHITECTURE.md §10.
+        // Compose 는 update() 직후 autoInvalidateUpdatedNode() 로 노드의 모든 capability 를
+        // 무효화한다(NodeChain.updateNode → NodeKind.autoInvalidateNodeSelf). 세분화된 update()
+        // 가 실효를 가지려면 Node 가 `shouldAutoInvalidate = false` 를 선언해야 한다.
+        // (지원되는 문서화된 API — Compose 의 graphicsLayer/paint 모디파이어가 동일 패턴 사용.
+        //  자세한 내용: ARCHITECTURE.md §10.)
+        // codegen 은 Node 클래스를 수정 못 하므로, @Invalidates 를 쓴 경우 이 선언을 요구한다.
+        val hasExplicitScopes = ctor.parameters.any { p ->
+            p.annotations.any { it.shortName.asString() == "Invalidates" }
+        }
+        if (hasExplicitScopes && !nodeDeclaresShouldAutoInvalidate(node)) {
+            logger.error(
+                "@Invalidates 를 쓰려면 Node 에 다음 한 줄이 필요하다 (그래야 세분화가 실효를 가짐):\n" +
+                    "    override val shouldAutoInvalidate: Boolean get() = false\n" +
+                    "미선언 시 Compose 가 update() 후 모든 capability 를 무효화하여 @Invalidates 가 무의미해진다.",
+                node,
+            )
+        }
 
         // --- 확장 함수: fun Modifier.<name>(...): Modifier = this.then(<Name>Element(...)) ---
         val extFun = FunSpec.builder(funName)
@@ -300,6 +312,10 @@ class ModifierNodeProcessor(
 
     private fun KSClassDeclaration.isPublic(): Boolean =
         modifiers.none { it.name == "INTERNAL" || it.name == "PRIVATE" || it.name == "PROTECTED" }
+
+    /** Node 클래스가 자체적으로 `shouldAutoInvalidate` 를 override 선언했는지 (값 false 여부는 신뢰). */
+    private fun nodeDeclaresShouldAutoInvalidate(node: KSClassDeclaration): Boolean =
+        node.getDeclaredProperties().any { it.simpleName.asString() == "shouldAutoInvalidate" }
 
     companion object {
         private val ANY_NULLABLE = ClassName("kotlin", "Any").copy(nullable = true)

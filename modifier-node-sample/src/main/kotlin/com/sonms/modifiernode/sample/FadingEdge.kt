@@ -36,6 +36,8 @@ internal class FadingEdgeNode(
     @Invalidates(Draw) var enabled: Boolean,
 ) : Modifier.Node(), DrawModifierNode {
 
+    override val shouldAutoInvalidate: Boolean get() = false
+
     private var layer: GraphicsLayer? = null
 
     override fun onAttach() {

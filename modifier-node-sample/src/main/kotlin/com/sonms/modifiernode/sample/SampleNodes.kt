@@ -23,6 +23,8 @@ import com.sonms.modifiernode.annotations.ModifierNodeFactory
 internal class DebugTintNode(
     @Invalidates(Draw) var color: Color,
 ) : Modifier.Node(), DrawModifierNode {
+    override val shouldAutoInvalidate: Boolean get() = false
+
     override fun ContentDrawScope.draw() {
         drawContent()
         drawRect(color)
@@ -38,6 +40,8 @@ internal class FixedSquareNode(
     @Invalidates(Measure) var side: Dp,
     @Invalidates(Draw) var overlay: Color,
 ) : Modifier.Node(), DrawModifierNode, LayoutModifierNode {
+
+    override val shouldAutoInvalidate: Boolean get() = false
 
     override fun MeasureScope.measure(measurable: Measurable, constraints: Constraints): MeasureResult {
         val px = side.roundToPx()

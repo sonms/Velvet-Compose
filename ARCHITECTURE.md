@@ -154,8 +154,9 @@ invalidation 계층: `Measure` > `Placement` > `Draw` (상위 하나만 호출),
 - [x] `:modifier-node-sample` 예제 2개(`debugTint` draw 전용, `fixedSquare` draw+layout) 빌드/코드젠 확인
 - [x] `fadingEdge` 재작성 (§9 참고)
 - [x] `composed` vs Node 비교 2케이스 (§10, `COMPARISON.md`)
-- [x] 계약 테스트 — `GeneratedElementTest`(equals/hashCode/create/update), `InvalidationContractTest`(equals 스킵)
-- [x] **invalidation 스코프 실효성 조사 → 불가 판정 (§10)**
+- [x] 계약 테스트 — `GeneratedElementTest`, `InvalidationContractTest`(equals 스킵), `AutoInvalidateProbeTest`(opt-out 동작)
+- [x] **invalidation 스코프 실효성 조사 → 작동 확인 (§10). 첫 "불가" 결론은 오독, 정정함**
+- [x] 프로세서: `@Invalidates` 사용 시 `shouldAutoInvalidate` override 강제
 - [ ] 기본값(default argument) 처리 — 현재 미지원, 호출부에서 전 인자 전달 필요
 - [ ] **§11 A/B/C 갈래 선택** ← 다음 결정
 
@@ -242,7 +243,7 @@ MVP 완료 후 아래를 근거로 **계속 / 중단**을 판단한다.
 
 ---
 
-## 10. `composed` 케이스 재검증 + invalidation 스코프 사망 선고
+## 10. `composed` 케이스 재검증 + invalidation 스코프 실효성
 
 `modifier-node-sample/COMPARISON.md` 에 2케이스 before/after. 요약:
 
@@ -251,75 +252,107 @@ MVP 완료 후 아래를 근거로 **계속 / 중단**을 판단한다.
 | 값(파라미터/CompositionLocal) 읽고 draw/measure 에서 반응 | **결정적** — 손 코드 7→10 vs codegen 없이 7→55 |
 | interaction / coroutine / animation | Element 제거는 도움되나 균형 못 뒤집음. `onUpdate` 훅 + 노드 유틸 필요 |
 
-### 치명적 발견 — §3.1 (파라미터 단위 invalidation 스코프) 이 불가능
+### 10.1 autoInvalidate 조사 — 처음 결론이 틀렸다 (정정)
 
-`androidx.compose.ui` **1.12.0-beta02 (BOM 2026.04.01) 바이트코드 직접 확인**:
+`androidx.compose.ui` **1.12.0-beta02 소스 직접 확인** (`ui-android-...-sources.jar`):
 
-- `NodeChain.updateNode()` 는 `element.update(node)` 직후 **무조건**
-  `NodeKindKt.autoInvalidateUpdatedNode(node)` 를 호출한다 (attached 이면 즉시, 아니면 attach 대기).
-- `autoInvalidateNodeSelf` 는 노드가 구현한 **모든** capability(measure/draw/semantics/
-  parentData/focus...)를 무효화한다.
-- 유일한 억제 수단 `Modifier.Node.shouldAutoInvalidate` 는:
-  1. **Element 가 아니라 Node 쪽** 프로퍼티 → `@ModifierNodeFactory` 가 사용자 Node 클래스에
-     주입 불가 (KSP 는 기존 소스 수정 못 함)
-  2. Compose 1.12 에서 **`@Deprecated`** (`getShouldAutoInvalidate$annotations` = deprecated)
-- Robolectric 테스트로도 재현: `@Invalidates(Draw)` 파라미터를 바꿔도 remeasure 발생.
+- `NodeChain.updateNode()` → `autoInvalidateUpdatedNode(node)` → `NodeKind.autoInvalidateNodeSelf`:
+  ```
+  if (phase == Updated && !node.shouldAutoInvalidate) return   // NodeKind.kt:337
+  ```
+  즉 **opt-out 이 있다.**
+- `Modifier.Node.shouldAutoInvalidate` (Modifier.kt:224-240): `open val ... get() = true`.
+  KDoc 이 직접 안내: *"You may choose to set this to `false` if your modifier has
+  auto-invalidatable properties that do not frequently require invalidation to improve
+  performance ... you must call the appropriate invalidate functions manually when the
+  modifier is updated."* → **이게 바로 파라미터 단위 invalidation 이다.**
+- **`@Deprecated` 아니다.** 앞 커밋에서 "deprecated" 라 한 건 바이트코드의
+  `getShouldAutoInvalidate$annotations()` 합성 메서드에 붙은 `Deprecated: true` 속성을 오독한 것.
+  같은 속성이 `getNode$annotations()` 에도 붙어 있는데 `node` 가 deprecated 일 리 없다 —
+  Kotlin 컴파일러의 `$annotations` 합성 메서드 처리 방식일 뿐. override 시 경고도 안 뜬다.
+- **Compose 자체가 이 패턴을 쓴다**: `SimpleGraphicsLayerModifier`(= `Modifier.graphicsLayer{}`),
+  `PainterNode`(= `Modifier.paint`), `BlockGraphicsLayerModifier`, `FocusTargetNode`.
+  `SimpleGraphicsLayerModifier` 주석: *"We can skip remeasuring as we only need to rerun the
+  placement block. we request it manually in the update block."*
 
-→ 생성된 `update()` 의 `if (redraw) invalidateDraw() else ...` 는 **런타임 효과가 없다**.
-  Compose 가 이미 전부 무효화한다. `@Invalidates` 는 **컴파일 타임 검증**
-  (`@Invalidates(Measure)` ↔ `LayoutModifierNode` 정합성) 용도로만 남는다.
+### 10.2 통제 실험 — `AutoInvalidateProbeTest`
 
-### 실제로 남는 가치
+동일 하네스, draw+layout 노드 2개, `drawKey`(draw 전용 파라미터)만 변경:
 
-1. `equals`/`hashCode`/`create`/`update`/`inspectableProperties` 보일러플레이트 제거
+| 노드 | `shouldAutoInvalidate` | drawKey 변경 시 remeasure |
+|---|---|---|
+| `AutoOnNode` | 기본(true) | **발생** (autoInvalidate) |
+| `AutoOffNode` | `false` | **없음** ✅ |
+| `AutoOffNode`, measureKey 변경 | `false` | 발생 (update() 의 `invalidateMeasurement()` 정상) |
+
+→ **파라미터 단위 invalidation 스코프는 작동한다.** 단 Node 가 `shouldAutoInvalidate = false`
+  를 선언해야 한다.
+
+### 10.3 남는 제약 — codegen 이 Node 에 그 한 줄을 못 넣는다
+
+`@ModifierNodeFactory` 는 사용자가 쓴 concrete Node 클래스를 수정할 수 없다(KSP 한계).
+**해결: `@Invalidates` 를 하나라도 쓰면 KSP 가 다음 선언을 요구한다(없으면 컴파일 에러).**
+```kotlin
+override val shouldAutoInvalidate: Boolean get() = false
+```
+Compose 엔지니어가 `SimpleGraphicsLayerModifier` 에 손으로 쓰는 바로 그 줄이다.
+codegen 은 정밀한 `update()` (계층 접기 포함)를 생성한다. `ModifierNodeProcessor` 구현됨.
+
+### 10.4 실제 가치 (수정판)
+
+1. **파라미터 단위 invalidation** — `@Invalidates` + 강제된 `shouldAutoInvalidate=false` +
+   생성된 `update()`. `AutoInvalidateProbeTest` 로 실효 확인. Compose 내부 hot-path 패턴과 동일.
+2. `equals`/`hashCode`/`create`/`update`/`inspectableProperties` 보일러플레이트 제거
    — modifier 당 ~30~55줄. `GeneratedElementTest` 로 계약 고정.
-2. **equals 스킵** — 파라미터 불변 시 `update()` 자체가 안 불림. `Modifier.Node` 성능의 핵심이며
-   codegen 이 정확한 `equals` 를 보장 → 사용자가 실수로 깨뜨릴 여지 제거. `InvalidationContractTest` 로 고정.
-3. `@Invalidates` scope ↔ 노드 인터페이스 **컴파일 타임 검증** (런타임 효과는 없음)
-4. (미구현) ABI 표면 축소 — Element/Node `internal`, 함수만 공개
+3. **equals 스킵** — 파라미터 불변 시 `update()` 자체가 안 불림. codegen 이 정확한 `equals` 보장.
+4. `@Invalidates` scope ↔ 노드 인터페이스 컴파일 타임 검증.
+5. (미구현) ABI 표면 축소.
 
-### 결정 게이트 재평가
+### 10.5 성능 효과의 현실적 크기
 
-| 조건 | 결과 |
-|---|---|
-| 1. 재작성이 원본보다 낫거나 동등 | **부분 충족** — Case A(값 읽기)는 명백히 이득, Case B(interaction)는 아님, `fadingEdge`(composition-free)는 손해 |
-| 2. invalidation 계약이 손으로 짤 때보다 명확한 이점 | **불충족** — 런타임 효과 없음 (§10). 컴파일 검증만 남고 이는 "있으면 좋지만 없어도 그만" |
-| 3. KSP 구현 비용이 시간 단위 | **충족** — 스캐폴딩+3케이스+테스트가 반나절 |
-
-**조건 2 불충족 = 중단 신호.** 헤드라인 차별점이 API 부재로 무너졌다.
-남는 건 보일러플레이트 제거 + equals 안정성 보장 + (예정) ABI 축소 — 사용자가 처음부터
-"10~20줄, 없어도 그만" 이라 평가한 티어다.
+파라미터 단위 invalidation 은 **micro-optimization** 이다. Compose 조차 전체 modifier 중
+극소수(graphicsLayer, paint, focus)에만 적용했다. equals 스킵(파라미터 불변 시 update 스킵)이
+`Modifier.Node` 성능의 대부분이고, 그건 `@Invalidates` 없이도 codegen 이 준다.
+`@Invalidates` 의 이득은 "파라미터가 자주 바뀌는데 그 변경이 draw 만 요구하는" 좁은 경우에 한정.
 
 ---
 
 ## 11. 결론
 
-**"파라미터 단위 invalidation + ABI" 라는 원래 라이브러리 명제로는 라이브러리화 부적합.**
-핵심(§3.1)이 Compose API 부재로 불가능하고, 남는 가치는 사용자 스스로 "없어도 그만" 으로
-평가한 수준이다.
+§10 정정 후: **원래 명제(파라미터 단위 invalidation + ABI)는 기술적으로 성립한다.**
+단 두 가지 냉정한 조건:
 
-세 갈래:
+- 파라미터 단위 invalidation 의 실제 성능 이득은 좁다 (§10.5). 주된 가치는 여전히
+  "보일러플레이트 제거 + equals 안정성 보장" 이다.
+- 니치는 그대로 좁다 (§5). `Modifier.Node` 직접 작성자 + 그중 codegen 수용자.
 
-### A. 중단 (권장 후보 1)
-`Modifier.Node` + KSP 를 반나절에 학습했고, "Compose 가 autoInvalidate 를 무조건 한다" 는
-비자명한 사실을 바이트코드로 확인했다. 브랜치를 아카이브하고 이 지식만 챙긴다.
-`master` 병합 없음.
+### 결정 게이트 재평가 (수정판)
 
-### B. 축소 재정의 (권장 후보 2)
-명제를 **"`Modifier.Node` 보일러플레이트 + ABI 친화 공개 API 생성기"** 로 낮춘다.
-- 마케팅에서 invalidation 성능 이야기를 **완전히 뺀다**
-- `@Invalidates` 는 컴파일 타임 lint 로만 유지 (scope↔인터페이스 정합성)
-- 추가 작업: Element/Node `internal` 은닉 + 함수만 공개 (ABI), `@ModifierNodeFactory(skipWhen=)`
-  (조건부 적용, §9-3), `onUpdate` 훅 (§10 Case B)
-- 대상: 자기 자신 + 소수 라이브러리 저자. "재미없지만 실재하는" 도구.
-- 이미 만든 인프라가 그대로 쓰이므로 유지 비용 낮음.
+| 조건 | 결과 |
+|---|---|
+| 1. 재작성이 원본보다 낫거나 동등 | **부분 충족** — Case A(값 읽기) 이득, Case B(interaction) 아님, composition-free 는 손해 |
+| 2. invalidation 계약이 손보다 명확한 이점 | **조건부 충족** — 작동하고(§10.2), KSP 가 `shouldAutoInvalidate` 강제(§10.3), 계약을 테스트로 고정. 단 이득 범위가 좁다(§10.5) |
+| 3. KSP 구현 비용이 시간 단위 | **충족** — 전체 반나절 |
 
-### C. 목표 전환 (더 큰 작업)
-"Modifier.Node 를 쉽게" 로 스코프를 넓힌다 — 노드 내부 애니메이션/InteractionSource 헬퍼,
-delegation 프리셋, 테스트 유틸. codegen 은 부품 하나로 격하. 초안 논의의 "방향 B" 로 회귀.
-작업량 크고 니치는 그대로.
+### 갈래
+
+**B. 정직한 재정의 (권장).**
+명제: *"`Modifier.Node` 보일러플레이트 제거 + equals 안정성 보장 + (opt-in) 파라미터 단위
+invalidation"*. 성능은 부차적 셀링포인트로만, 과장 없이. 이미 만든 인프라가 거의 그대로 완성형.
+남은 작업:
+- ABI: Element/Node `internal` 은닉 + 함수만 공개
+- `@ModifierNodeFactory(skipWhen=)` — 조건부 적용 (§9-3)
+- `onUpdate` 훅 — interaction/re-subscribe (§10 Case B)
+- default argument 지원 검토
+- README 에 §5 한계 + §10.5 성능 현실 명시
+
+**A. 중단.** 니치가 좁고 파라미터 단위 이득이 미미하다고 보면 여전히 유효한 선택.
+지식(§10)은 문서로 남긴다.
+
+**C. 목표 전환.** "Modifier.Node 를 쉽게" 로 확장 (노드 유틸/delegation/테스트). 작업량 큼.
 
 ### 남길 것 (어느 갈래든)
-- `ARCHITECTURE.md` §10 — "Compose 는 `update()` 후 무조건 autoInvalidate 한다,
-  `shouldAutoInvalidate` 는 deprecated" — 재확인 비용을 아끼는 사실.
-- `COMPARISON.md` — `composed` vs Node 의 부류별 손익표.
+- `ARCHITECTURE.md` §10 — autoInvalidate 메커니즘 + `shouldAutoInvalidate` opt-out 사실관계
+  (그리고 처음에 틀렸던 이유). 재확인 비용을 아낀다.
+- `COMPARISON.md` — `composed` vs Node 부류별 손익표.
+- `AutoInvalidateProbeTest` — opt-out 동작 회귀 방지.

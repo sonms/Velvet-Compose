@@ -69,6 +69,8 @@ internal class PressScaleNode(
     @Invalidates(None) var interactionSource: InteractionSource,
 ) : Modifier.Node(), DrawModifierNode {
 
+    override val shouldAutoInvalidate: Boolean get() = false
+
     private val scaleAnim = Animatable(1f)
     private var collectJob: Job? = null
     private var boundSource: InteractionSource? = null

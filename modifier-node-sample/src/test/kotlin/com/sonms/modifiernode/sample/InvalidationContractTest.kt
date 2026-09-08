@@ -41,6 +41,8 @@ internal class ProbeNode(
     @Invalidates(Measure) var measureKey: Int,
 ) : Modifier.Node(), DrawModifierNode, LayoutModifierNode {
 
+    override val shouldAutoInvalidate: Boolean get() = false
+
     override fun MeasureScope.measure(measurable: Measurable, constraints: Constraints): MeasureResult {
         ProbeCounters.measures++
         val placeable = measurable.measure(constraints)
@@ -54,12 +56,12 @@ internal class ProbeNode(
 }
 
 /**
- * codegen 이 주는 유일한 런타임 최적화 = **equals 스킵**.
+ * codegen 이 주는 최적화 중 하나 = **equals 스킵**.
  * 파라미터가 안 바뀌면 `Element.equals` == true → Compose 가 `update()` 를 아예 안 부름
  * → 측정/그리기 무효화 없음.
  *
- * (파라미터 단위 invalidation 스코프는 작동하지 않는다 — ARCHITECTURE.md §10.
- *  `NodeChain.updateNode` 바이트코드상 `update()` 직후 `autoInvalidateUpdatedNode()` 무조건 호출.)
+ * (파라미터 단위 invalidation 스코프는 `shouldAutoInvalidate = false` 를 통해 작동한다 —
+ *  `AutoInvalidateProbeTest` + ARCHITECTURE.md §10.)
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
