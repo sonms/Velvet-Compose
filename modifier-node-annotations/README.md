@@ -4,7 +4,7 @@
 `Modifier` 확장 함수를 KSP 로 생성한다. `composed { }` 를 벗어나 `Modifier.Node` 를 쓸 때
 반복되는 보일러플레이트(Element / `equals` / `hashCode` / `update` / `inspectableProperties`)를 없앤다.
 
-> **포지셔닝.** Velvet-Compose 내부 인프라 + `Modifier.Node` 학습용 실험 프로젝트다.
+> **포지셔닝.** Velvet-Compose 내부 인프라 + `Modifier.Node` 학습 목적의 도구다.
 > `Modifier.Node` 를 직접 작성하는 사람(라이브러리 저자 등)만 대상이고, 니치가 좁다.
 > 1인 유지보수 · SLA 없음 · API 호환성 보장 없음. 설계 배경과 판단 근거는
 > [`ARCHITECTURE.md`](../ARCHITECTURE.md), `composed` 와의 비교는

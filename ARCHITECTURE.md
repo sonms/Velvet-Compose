@@ -1,6 +1,6 @@
 # ARCHITECTURE — modifier-node-codegen
 
-> 브랜치: `feat/modifier-node-codegen` (실험). `master` 미병합.
+> 브랜치: `feat/modifier-node-codegen` — `master` 미병합. 갈래 B 진행 중 (§8·§9).
 > 스택: Kotlin 2.0.21 · AGP 8.13.2 · Compose BOM 2026.04.01 (ui 1.12.0-beta02) · KSP 2.0.21-1.0.28 · KotlinPoet 1.18.1
 > 모듈: `:modifier-node-annotations` · `:modifier-node-processor` · `:modifier-node-sample`(예제+테스트, 미배포)
 
