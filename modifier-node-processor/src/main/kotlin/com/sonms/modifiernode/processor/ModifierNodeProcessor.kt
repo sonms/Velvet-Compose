@@ -38,6 +38,9 @@ private const val LAYOUT_MODIFIER_NODE = "androidx.compose.ui.node.LayoutModifie
 /** 무효화 범위. 처리기 내부 표현. */
 private enum class Scope { Measure, Placement, Draw, Semantics, ParentData, None }
 
+/** @SkipWhenFalse / @SkipWhenTrue 처리기 내부 표현. */
+private enum class SkipKind { WhenFalse, WhenTrue }
+
 class ModifierNodeProcessor(
     private val codeGenerator: CodeGenerator,
     private val logger: KSPLogger,
@@ -127,12 +130,26 @@ class ModifierNodeProcessor(
             )
         }
 
-        // --- 확장 함수: fun Modifier.<name>(...): Modifier = this.then(<Name>Element(...)) ---
+        // @SkipWhenFalse / @SkipWhenTrue → 확장 함수 앞에 가드 삽입.
+        val skipConditions = params.mapNotNull { p ->
+            when (p.skip) {
+                SkipKind.WhenFalse -> "!${p.name}"
+                SkipKind.WhenTrue -> p.name
+                null -> null
+            }
+        }
+
+        // --- 확장 함수: fun Modifier.<name>(...): Modifier { if (<skip>) return this; return this.then(...) } ---
         val extFun = FunSpec.builder(funName)
             .addModifiers(funVisibility)
             .receiver(MODIFIER)
             .returns(MODIFIER)
             .apply { params.forEach { addParameter(it.name, it.type) } }
+            .apply {
+                if (skipConditions.isNotEmpty()) {
+                    addStatement("if (%L) return this", skipConditions.joinToString(" || "))
+                }
+            }
             .addStatement(
                 "return this.then(%T(%L))",
                 elementClass,
@@ -176,12 +193,28 @@ class ModifierNodeProcessor(
         val name: String,
         val type: com.squareup.kotlinpoet.TypeName,
         val scopes: Set<Scope>,
+        val skip: SkipKind?,
     )
 
     private fun resolveParam(p: KSValueParameter, node: KSClassDeclaration, supported: Set<Scope>): Param {
         val name = p.name!!.asString()
         if (!p.isVar) {
             logger.error("Parameter '$name' must be a 'var' property parameter", p)
+        }
+
+        val skipFalse = p.annotations.any { it.shortName.asString() == "SkipWhenFalse" }
+        val skipTrue = p.annotations.any { it.shortName.asString() == "SkipWhenTrue" }
+        val isBoolean = p.type.resolve().declaration.qualifiedName?.asString() == "kotlin.Boolean"
+        if ((skipFalse || skipTrue) && !isBoolean) {
+            logger.error("@SkipWhen* requires a Boolean parameter; '$name' is not Boolean", p)
+        }
+        if (skipFalse && skipTrue) {
+            logger.error("'$name' has both @SkipWhenFalse and @SkipWhenTrue", p)
+        }
+        val skip = when {
+            skipFalse -> SkipKind.WhenFalse
+            skipTrue -> SkipKind.WhenTrue
+            else -> null
         }
         val invAnn = p.annotations.firstOrNull { it.shortName.asString() == "Invalidates" }
         val scopes: Set<Scope> = when {
@@ -211,7 +244,7 @@ class ModifierNodeProcessor(
                 }
             }
         }
-        return Param(name, p.type.toTypeName(), scopes)
+        return Param(name, p.type.toTypeName(), scopes, skip)
     }
 
     private fun createFun(nodeClass: ClassName, params: List<Param>) = FunSpec.builder("create")

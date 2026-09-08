@@ -17,7 +17,10 @@ import com.sonms.modifiernode.annotations.Invalidates
 import com.sonms.modifiernode.annotations.InvalidationScope.Draw
 import com.sonms.modifiernode.annotations.InvalidationScope.Measure
 import com.sonms.modifiernode.annotations.ModifierNodeFactory
+import com.sonms.modifiernode.annotations.SkipWhenFalse
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotSame
+import org.junit.Assert.assertSame
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -55,6 +58,15 @@ internal class ProbeNode(
     }
 }
 
+@ModifierNodeFactory(name = "skipProbe")
+internal class SkipProbeNode(
+    @SkipWhenFalse var on: Boolean,
+    @Invalidates(Draw) var tag: Int,
+) : Modifier.Node(), DrawModifierNode {
+    override val shouldAutoInvalidate: Boolean get() = false
+    override fun ContentDrawScope.draw() = drawContent()
+}
+
 /**
  * codegen 이 주는 최적화 중 하나 = **equals 스킵**.
  * 파라미터가 안 바뀌면 `Element.equals` == true → Compose 가 `update()` 를 아예 안 부름
@@ -89,5 +101,12 @@ class InvalidationContractTest {
 
         assertEquals("equal Element must not trigger remeasure", 0, ProbeCounters.measures)
         assertEquals("equal Element must not trigger redraw", 0, ProbeCounters.draws)
+    }
+
+    /** @SkipWhenFalse: on=false 면 생성 함수가 리시버를 그대로 반환(노드 미적용). */
+    @Test
+    fun skipWhenFalse_gates_application() {
+        assertSame("on=false → 리시버 그대로", Modifier, Modifier.skipProbe(on = false, tag = 0))
+        assertNotSame("on=true → Element 추가됨", Modifier, Modifier.skipProbe(on = true, tag = 0))
     }
 }

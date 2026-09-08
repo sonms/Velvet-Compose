@@ -348,8 +348,12 @@ invalidation"*. 성능은 부차적 셀링포인트로만, 과장 없이. 이미
    - `@ModifierNodeFactory(visibility = GeneratedVisibility.Public | Internal)`, 기본 `Public`
    - Node 가 `private` 면 에러(생성 파일에서 참조 불가), `public` 이면 "ABI 노출" 경고
    - `public fun Modifier.foo()` 본문이 `internal` Element 를 참조 — Kotlin 허용(시그니처만 노출 검사)
-2. `@ModifierNodeFactory(skipWhen=)` — 조건부 적용 (§9-3) ← 다음
-3. `onUpdate` 훅 — interaction/re-subscribe (§10 Case B)
+2. **조건부 적용 — 마커 어노테이션 `@SkipWhenFalse` / `@SkipWhenTrue`** ✅ 완료
+   - `Boolean` 파라미터에 부착 → 생성 함수 앞에 `if (!param) return this` (여럿이면 OR)
+   - skip 시 노드 미attach. "사라지는 애니메이션" 은 불가 → 그 경우 마커 없이 노드가 no-op
+   - `skipWhenFalse_gates_application` 테스트 (`Modifier.skipProbe(on=false) === Modifier`)
+   - `fadingEdge` dogfood 를 `@SkipWhenFalse enabled` 로 갱신
+3. `onUpdate` 훅 — interaction/re-subscribe (§10 Case B) ← 다음
 4. default argument 지원 검토
 5. README 에 §5 한계 + §10.5 성능 현실 명시
 

@@ -44,6 +44,25 @@ annotation class Invalidates(
 )
 
 /**
+ * 이 `Boolean` 파라미터가 `false` 면 modifier 를 적용하지 않는다.
+ *
+ * 생성된 `Modifier.<name>(...)` 함수 맨 앞에 `if (!param) return this` 가 삽입되어,
+ * 조건 불충족 시 노드가 아예 attach 되지 않는다.
+ *
+ * 여러 `@SkipWhen*` 파라미터가 있으면 하나라도 skip 조건이면 skip 한다(OR).
+ * 주의: skip 시 modifier 가 완전히 제거되므로 "사라지는 애니메이션" 은 불가능하다.
+ * 그런 경우엔 마커 없이 노드가 파라미터를 읽어 no-op 하도록 구현하라.
+ */
+@Target(AnnotationTarget.VALUE_PARAMETER)
+@Retention(AnnotationRetention.SOURCE)
+annotation class SkipWhenFalse
+
+/** [SkipWhenFalse] 의 반대. 이 `Boolean` 파라미터가 `true` 면 modifier 를 적용하지 않는다. */
+@Target(AnnotationTarget.VALUE_PARAMETER)
+@Retention(AnnotationRetention.SOURCE)
+annotation class SkipWhenTrue
+
+/**
  * 무효화 범위. 계층: [Measure] > [Placement] > [Draw] (상위 하나만 호출).
  * [Semantics], [ParentData] 는 직교(별도 호출). [None] 은 무효화 없음.
  */

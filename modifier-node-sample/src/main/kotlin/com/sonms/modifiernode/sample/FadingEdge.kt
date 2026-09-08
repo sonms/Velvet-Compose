@@ -12,6 +12,7 @@ import androidx.compose.ui.node.requireGraphicsContext
 import com.sonms.modifiernode.annotations.Invalidates
 import com.sonms.modifiernode.annotations.InvalidationScope.Draw
 import com.sonms.modifiernode.annotations.ModifierNodeFactory
+import com.sonms.modifiernode.annotations.SkipWhenFalse
 
 /**
  * Dogfooding — `wheelpicker` 의 `Modifier.fadingEdge` 를 `Modifier.Node` 로 재작성.
@@ -21,19 +22,17 @@ import com.sonms.modifiernode.annotations.ModifierNodeFactory
  *  - [onAttach] / [onDetach] 에서 레이어 생성/반납 (composition 밖 lifecycle)
  *  - [draw] 에서 컨텐츠를 레이어에 record 하고 같은 버퍼에 DstIn 마스크를 얹는다
  *
- * 결정 게이트 메모:
- *  - `enabled=false` 는 원본에서 "modifier 미적용(early return)" 이었다. 현재 codegen 은
- *    `this.then(Element(...))` 를 무조건 생성하므로 **조건부 적용을 표현할 수 없다**.
- *    여기서는 노드가 파라미터를 보고 no-op 하는 방식으로 우회했고, 그 대가로 disabled
- *    상태에서도 노드/레이어가 attach 된다.
+ * 메모:
+ *  - `enabled` 은 `@SkipWhenFalse` — 원본의 `if (!enabled) return this` 를 codegen 이
+ *    생성 함수 앞에 넣어준다. `enabled=false` 면 노드/레이어가 아예 attach 되지 않는다.
  *  - 그리기 로직(브러시 계산, record, DstIn, drawLayer)은 전부 손으로 작성했다.
- *    codegen 이 걷어낸 건 Element/equals/hashCode/update/inspector 뿐이다.
+ *    codegen 이 걷어낸 건 Element/equals/hashCode/update/inspector + skip 가드 뿐이다.
  */
 @ModifierNodeFactory(name = "fadingEdge")
 internal class FadingEdgeNode(
     @Invalidates(Draw) var isVertical: Boolean,
     @Invalidates(Draw) var fraction: Float,
-    @Invalidates(Draw) var enabled: Boolean,
+    @SkipWhenFalse var enabled: Boolean,
 ) : Modifier.Node(), DrawModifierNode {
 
     override val shouldAutoInvalidate: Boolean get() = false
@@ -50,8 +49,9 @@ internal class FadingEdgeNode(
     }
 
     override fun ContentDrawScope.draw() {
+        // enabled 는 @SkipWhenFalse — 여기 도달했다면 항상 true (노드 미attach 로 걸러짐).
         val gl = layer
-        if (!enabled || gl == null) {
+        if (gl == null) {
             drawContent()
             return
         }
