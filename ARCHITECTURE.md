@@ -1,9 +1,9 @@
 # ARCHITECTURE — Modifier.Node codegen (실험 브랜치)
 
 > 브랜치: `feat/modifier-node-codegen`
-> 상태: **갈래 B 확정** (§11). MVP + ABI/skipWhen/onChange 구현 완료, README·default 인자 남음.
-> `master` 병합은 남은 작업 정리 후.
-> 현재 진행 상태의 정본은 §11 "남은 작업" 이다 (아래 §6 진행 상태는 초기 기록).
+> 상태: **갈래 B 확정** (§11). MVP + ABI + `@SkipWhen*` + `@OnChange` + README 완료.
+> `@Default` 는 검토만(§12), 구현 보류. `master` 병합은 남은 정리(§11) 후.
+> 진행 상태 정본은 §11 (§6 진행 상태는 초기 기록).
 
 ---
 
@@ -353,8 +353,13 @@ invalidation"*. 성능은 부차적 셀링포인트로만, 과장 없이. 이미
    - KSP 가 `fun on<Name>Changed()` (무인자) 선언을 요구
    - `PressScaleNode` 를 이걸로 갱신 → `boundSource` dedup 필드 + `draw()` 의 `rebind()` 제거
    - `onChange_fires_only_when_param_changes` 테스트
-4. default argument 지원 — `@Default(String)` 마커 검토 완료(§12), 구현 보류
-5. README 에 §5 한계 + §10.5 성능 현실 명시 ← 다음
+4. **README** — `modifier-node-annotations/README.md` ✅ 완료
+   - 포지셔닝(§5) · 어노테이션 레퍼런스 · `shouldAutoInvalidate` 요구 · 성능 현실(§10.5) · 한계
+5. default argument 지원 — `@Default(String)` 마커 검토 완료(§12), **구현 보류**
+
+### 남은 것
+- (보류) `@Default` 구현 — 사용자 요청 시
+- `master` 병합 전 정리: `:modifier-node-sample` 을 ship 할지 trim 할지, 커밋 squash 여부
 
 **A. 중단.** (보류) 니치가 좁고 파라미터 단위 이득이 미미하다고 보면 유효했던 선택.
 
