@@ -15,18 +15,11 @@ import com.sonms.modifiernode.annotations.ModifierNodeFactory
 import com.sonms.modifiernode.annotations.SkipWhenFalse
 
 /**
- * Dogfooding — `wheelpicker` 의 `Modifier.fadingEdge` 를 `Modifier.Node` 로 재작성.
+ * 가장자리를 서서히 투명하게 만드는 페이드 엣지 효과.
+ * Fading edge effect that fades the edges to transparent.
  *
- * 원본은 `graphicsLayer { compositingStrategy = Offscreen }.drawWithCache { ... }` 조합이었다.
- * Node 판에서는 오프스크린 버퍼를 직접 [GraphicsLayer] 로 관리한다:
- *  - [onAttach] / [onDetach] 에서 레이어 생성/반납 (composition 밖 lifecycle)
- *  - [draw] 에서 컨텐츠를 레이어에 record 하고 같은 버퍼에 DstIn 마스크를 얹는다
- *
- * 메모:
- *  - `enabled` 은 `@SkipWhenFalse` — 원본의 `if (!enabled) return this` 를 codegen 이
- *    생성 함수 앞에 넣어준다. `enabled=false` 면 노드/레이어가 아예 attach 되지 않는다.
- *  - 그리기 로직(브러시 계산, record, DstIn, drawLayer)은 전부 손으로 작성했다.
- *    codegen 이 걷어낸 건 Element/equals/hashCode/update/inspector + skip 가드 뿐이다.
+ * 오프스크린 [GraphicsLayer] 에 컨텐츠를 그린 뒤 같은 버퍼에 `DstIn` 그라디언트 마스크를 얹는다.
+ * Draws the content into an offscreen [GraphicsLayer], then applies a `DstIn` gradient mask to it.
  */
 @ModifierNodeFactory(name = "fadingEdge")
 internal class FadingEdgeNode(
@@ -49,7 +42,6 @@ internal class FadingEdgeNode(
     }
 
     override fun ContentDrawScope.draw() {
-        // enabled 는 @SkipWhenFalse — 여기 도달했다면 항상 true (노드 미attach 로 걸러짐).
         val gl = layer
         if (gl == null) {
             drawContent()

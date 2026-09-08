@@ -16,8 +16,8 @@ import com.sonms.modifiernode.annotations.InvalidationScope.Measure
 import com.sonms.modifiernode.annotations.ModifierNodeFactory
 
 /**
- * 예제 1 — draw 전용 노드.
- * 생성물: `DebugTintElement`, `fun Modifier.debugTint(color: Color): Modifier`
+ * 컨텐츠 위에 색을 덧칠하는 draw 전용 노드.
+ * Draw-only node that tints the content with a color.
  */
 @ModifierNodeFactory(name = "debugTint")
 internal class DebugTintNode(
@@ -32,8 +32,8 @@ internal class DebugTintNode(
 }
 
 /**
- * 예제 2 — draw + layout 노드. update 의 remeasure/redraw 분기를 검증하기 위한 케이스.
- * 생성물: `FixedSquareElement`, `fun Modifier.fixedSquare(side: Dp, overlay: Color): Modifier`
+ * 정사각형 크기로 강제하고 그 위에 색을 덧칠하는 draw + layout 노드.
+ * Draw + layout node that forces a square size and tints over it.
  */
 @ModifierNodeFactory(name = "fixedSquare")
 internal class FixedSquareNode(

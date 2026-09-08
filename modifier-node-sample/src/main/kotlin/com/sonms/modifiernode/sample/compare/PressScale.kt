@@ -19,20 +19,7 @@ import com.sonms.modifiernode.annotations.ModifierNodeFactory
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
-// ─────────────────────────────────────────────────────────────────────────────
-// BEFORE — composed { }: InteractionSource 구독 + 애니메이션
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * press 되는 동안 축소 스케일 애니메이션.
- *
- * `composed` 가 여기서 해주는 것:
- *  - `collectIsPressedAsState()` — InteractionSource 구독을 composition lifecycle 에 묶음
- *  - `animateFloatAsState` — 애니메이션 상태를 remember
- *  - `interactionSource` 가 바뀌면 `collectIsPressedAsState` 가 알아서 재구독 (remember 키)
- *
- * 대가: equals 불안정, 매 재구성 re-materialize, composition 밖 사용 불가.
- */
+/** BEFORE — `composed { }` 로 InteractionSource 구독 + 애니메이션. `COMPARISON.md` Case B 참고. */
 fun Modifier.pressScaleComposed(
     interactionSource: InteractionSource,
     pressedScale: Float,
@@ -48,20 +35,11 @@ fun Modifier.pressScaleComposed(
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// AFTER — Modifier.Node + codegen
-// ─────────────────────────────────────────────────────────────────────────────
-
 /**
- * codegen 이 걷어내는 것: Element/equals/hashCode/update/inspector.
+ * AFTER — 같은 효과를 `Modifier.Node` 로.
  *
- * 손으로 남는 것 — 그리고 이게 §COMPARISON 의 핵심:
- *  - `coroutineScope` 에서 `interactionSource.interactions` 수집 (press 카운팅)
- *  - `Animatable` 을 직접 들고 `launch { animateTo() }`
- *  - `onDetach` 에서 job 정리
- *  - ⚠️ `interactionSource` 파라미터가 바뀌면 재구독이 필요한데, 현재 codegen 의
- *    `update` 는 `node.interactionSource = interactionSource` 대입만 한다.
- *    "파라미터 변경 시 노드 커스텀 로직 실행" 훅이 없다 → 여기서는 수동 처리.
+ * `interactionSource` 가 바뀌면 재구독이 필요한데 생성된 `update()` 는 필드 대입만 한다 →
+ * [draw] 진입 시 [rebind] 로 수동 확인 (§10 Case B, `onUpdate` 훅 도입 전까지의 우회).
  */
 @ModifierNodeFactory(name = "pressScale")
 internal class PressScaleNode(
@@ -85,7 +63,6 @@ internal class PressScaleNode(
         boundSource = null
     }
 
-    /** codegen 의 update 가 대입만 하므로, 재구독은 draw 진입 시 수동 확인. */
     private fun rebind() {
         if (boundSource === interactionSource) return
         collectJob?.cancel()
@@ -106,7 +83,7 @@ internal class PressScaleNode(
 
     override fun ContentDrawScope.draw() {
         rebind()
-        val s = scaleAnim.value // Animatable.value 는 snapshot 상태 → 프레임마다 자동 redraw
+        val s = scaleAnim.value // snapshot 상태 → 애니메이션 프레임마다 자동 redraw
         scale(s, s, center) {
             this@draw.drawContent()
         }

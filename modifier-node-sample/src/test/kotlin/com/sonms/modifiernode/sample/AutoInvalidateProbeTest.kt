@@ -27,17 +27,8 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
- * 통제 실험: "파라미터 단위 invalidation" 이 실제로 효과를 내는가?
- *
- * 동일 하네스에서 두 노드를 비교한다.
- *  - [AutoOnNode]  : shouldAutoInvalidate = 기본(true). update() 후 Compose 가 measure+draw 전부 무효화.
- *  - [AutoOffNode] : shouldAutoInvalidate = false. update() 가 부른 것만 무효화되어야 함.
- *
- * drawKey 만 바꿨을 때:
- *  - AutoOn  → measures >= 1  (autoInvalidate 가 remeasure 시킴)
- *  - AutoOff → measures == 0  (draw 만)   ← 이게 나오면 §10 "불가" 결론은 틀렸다
- *
- * 카운터는 노드 자신의 measure()/draw() 안에서 증가 → wrapper 레벨 리메저와 무관.
+ * `shouldAutoInvalidate = false` 노드는 `update()` 가 부른 것만 무효화한다 (ARCHITECTURE.md §10).
+ * 동일 하네스에서 auto ON/OFF 두 노드를 비교하고, 카운터는 노드 자신의 measure()/draw() 에서 증가시킨다.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -55,7 +46,7 @@ class AutoInvalidateProbeTest {
     private val onC = Counters()
     private val offC = Counters()
 
-    // ── autoInvalidate ON (default) ──────────────────────────────────────────
+    // autoInvalidate ON (기본)
     private inner class AutoOnNode(var drawKey: Int, var measureKey: Int) :
         Modifier.Node(), DrawModifierNode, LayoutModifierNode {
         override fun MeasureScope.measure(m: Measurable, c: Constraints): MeasureResult {
@@ -82,10 +73,9 @@ class AutoInvalidateProbeTest {
         override fun hashCode() = drawKey * 31 + measureKey
     }
 
-    // ── autoInvalidate OFF ───────────────────────────────────────────────────
+    // autoInvalidate OFF
     private inner class AutoOffNode(var drawKey: Int, var measureKey: Int) :
         Modifier.Node(), DrawModifierNode, LayoutModifierNode {
-        @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
         override val shouldAutoInvalidate: Boolean get() = false
         override fun MeasureScope.measure(m: Measurable, c: Constraints): MeasureResult {
             offC.measures++
@@ -136,24 +126,24 @@ class AutoInvalidateProbeTest {
         return counters
     }
 
-    /** 기준선: autoInvalidate ON → draw 파라미터만 바꿔도 remeasure. */
+    /** 기준선: auto ON 이면 draw 파라미터만 바꿔도 remeasure. */
     @Test
     fun autoOn_drawParam_change_remeasures() {
         val c = run(makeOn = true, mutate = 0)
-        assertTrue("autoInvalidate ON: draw param change remeasures (baseline)", c.measures >= 1)
+        assertTrue(c.measures >= 1)
     }
 
-    /** 핵심 A: autoInvalidate OFF → draw 파라미터 변경이 remeasure 를 유발하지 않는다. */
+    /** auto OFF: draw 파라미터 변경은 remeasure 를 유발하지 않는다. */
     @Test
     fun autoOff_drawParam_change_does_NOT_remeasure() {
         val c = run(makeOn = false, mutate = 0)
-        assertEquals("autoInvalidate OFF: draw param change must NOT remeasure", 0, c.measures)
+        assertEquals(0, c.measures)
     }
 
-    /** 핵심 B: autoInvalidate OFF → measure 파라미터 변경 시 update() 의 invalidateMeasurement() 는 작동한다. */
+    /** auto OFF: measure 파라미터 변경 시 update() 의 invalidateMeasurement() 는 정상 작동. */
     @Test
     fun autoOff_measureParam_change_DOES_remeasure_via_update() {
         val c = run(makeOn = false, mutate = 1)
-        assertTrue("autoInvalidate OFF: manual invalidateMeasurement() in update() must work", c.measures >= 1)
+        assertTrue(c.measures >= 1)
     }
 }

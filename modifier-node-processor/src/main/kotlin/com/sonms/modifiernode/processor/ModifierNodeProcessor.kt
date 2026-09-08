@@ -112,20 +112,16 @@ class ModifierNodeProcessor(
 
         val params = ctor.parameters.map { p -> resolveParam(p, node, supported) }
 
-        // Compose 는 update() 직후 autoInvalidateUpdatedNode() 로 노드의 모든 capability 를
-        // 무효화한다(NodeChain.updateNode → NodeKind.autoInvalidateNodeSelf). 세분화된 update()
-        // 가 실효를 가지려면 Node 가 `shouldAutoInvalidate = false` 를 선언해야 한다.
-        // (지원되는 문서화된 API — Compose 의 graphicsLayer/paint 모디파이어가 동일 패턴 사용.
-        //  자세한 내용: ARCHITECTURE.md §10.)
-        // codegen 은 Node 클래스를 수정 못 하므로, @Invalidates 를 쓴 경우 이 선언을 요구한다.
+        // @Invalidates 는 Node 가 shouldAutoInvalidate=false 를 선언해야 실효가 있다 (ARCHITECTURE.md §10).
+        // codegen 은 Node 클래스를 수정 못 하므로 여기서 요구한다.
         val hasExplicitScopes = ctor.parameters.any { p ->
             p.annotations.any { it.shortName.asString() == "Invalidates" }
         }
         if (hasExplicitScopes && !nodeDeclaresShouldAutoInvalidate(node)) {
             logger.error(
-                "@Invalidates 를 쓰려면 Node 에 다음 한 줄이 필요하다 (그래야 세분화가 실효를 가짐):\n" +
+                "@Invalidates requires the node to declare:\n" +
                     "    override val shouldAutoInvalidate: Boolean get() = false\n" +
-                    "미선언 시 Compose 가 update() 후 모든 capability 를 무효화하여 @Invalidates 가 무의미해진다.",
+                    "Otherwise Compose auto-invalidates every capability after update() and @Invalidates is a no-op.",
                 node,
             )
         }

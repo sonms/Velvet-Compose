@@ -67,14 +67,7 @@ internal class SkipProbeNode(
     override fun ContentDrawScope.draw() = drawContent()
 }
 
-/**
- * codegen 이 주는 최적화 중 하나 = **equals 스킵**.
- * 파라미터가 안 바뀌면 `Element.equals` == true → Compose 가 `update()` 를 아예 안 부름
- * → 측정/그리기 무효화 없음.
- *
- * (파라미터 단위 invalidation 스코프는 `shouldAutoInvalidate = false` 를 통해 작동한다 —
- *  `AutoInvalidateProbeTest` + ARCHITECTURE.md §10.)
- */
+/** equals 스킵과 `@SkipWhenFalse` 가드. Element 가 equal 이면 Compose 는 `update()` 를 부르지 않는다. */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = [34])
@@ -89,24 +82,22 @@ class InvalidationContractTest {
         val tick = mutableIntStateOf(0)
 
         rule.setContent {
-            tick.intValue // 재구성 트리거용, modifier 파라미터엔 안 들어감
+            tick.intValue // 상위 재구성만 유발, probe 파라미터는 고정
             Box(Modifier.size(24.dp).probe(drawKey.intValue, 0))
         }
         rule.waitForIdle()
         ProbeCounters.reset()
 
-        // 상위만 재구성, probe 파라미터는 동일 → Element equal → update 미호출
         tick.intValue = 1
         rule.waitForIdle()
 
-        assertEquals("equal Element must not trigger remeasure", 0, ProbeCounters.measures)
-        assertEquals("equal Element must not trigger redraw", 0, ProbeCounters.draws)
+        assertEquals(0, ProbeCounters.measures)
+        assertEquals(0, ProbeCounters.draws)
     }
 
-    /** @SkipWhenFalse: on=false 면 생성 함수가 리시버를 그대로 반환(노드 미적용). */
     @Test
     fun skipWhenFalse_gates_application() {
-        assertSame("on=false → 리시버 그대로", Modifier, Modifier.skipProbe(on = false, tag = 0))
-        assertNotSame("on=true → Element 추가됨", Modifier, Modifier.skipProbe(on = true, tag = 0))
+        assertSame(Modifier, Modifier.skipProbe(on = false, tag = 0))
+        assertNotSame(Modifier, Modifier.skipProbe(on = true, tag = 0))
     }
 }
