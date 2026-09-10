@@ -21,6 +21,12 @@ iOS 감성의 부드럽고 아름다운 Jetpack Compose 컴포넌트 라이브�
 | 🎡 **WheelPicker** | [![Maven Central](https://img.shields.io/maven-central/v/io.github.sonms/wheelpicker.svg)](https://central.sonatype.com/artifact/io.github.sonms/wheelpicker) | 무한 스크롤을 지원하는 iOS 스타일 3D 휠 피커 |
 | ⭐ **RatingBar** | [![Maven Central](https://img.shields.io/maven-central/v/io.github.sonms/ratingbar.svg)](https://central.sonatype.com/artifact/io.github.sonms/ratingbar) | 스프링 애니메이션과 햅틱 피드백을 지원하는 커스터마이징 가능한 별점 바 |
 
+## 🧩 도구
+
+| 모듈 | Maven Central | 설명 |
+|---|---|---|
+| 🧩 **Modifier.Node Codegen** | [![Maven Central](https://img.shields.io/maven-central/v/io.github.sonms/modifier-node-processor.svg)](https://central.sonatype.com/artifact/io.github.sonms/modifier-node-processor) | `Modifier.Node` 에서 `ModifierNodeElement` 와 `Modifier` 확장 함수를 생성하는 KSP 프로세서 |
+
 ---
 
 ## 🚀 시작하기
@@ -361,6 +367,106 @@ RatingBar(
 |---|---|
 | `StepSize.FULL` | 1.0 단위로 선택 |
 | `StepSize.HALF` | 0.5 단위로 선택 |
+
+---
+
+## 🧩 Modifier.Node Codegen
+
+`Modifier.Node` 만 작성하면 `ModifierNodeElement` 와 `Modifier` 확장 함수는 KSP 가 생성한다.
+`composed { }` 에 머물게 만드는 보일러플레이트 벽을 없앤다.
+
+> `Modifier.Node` 를 직접 작성하는 사람(라이브러리 저자 등)을 위한 도구다.
+> 1인 유지보수 · SLA 없음 · API 호환성 보장 없음.
+> 설계 배경: [`ARCHITECTURE.md`](ARCHITECTURE.md) · `composed` 와의 비교: [`COMPARISON.md`](modifier-node-sample/COMPARISON.md)
+
+### 설정
+
+```kotlin
+plugins {
+    id("com.google.devtools.ksp")
+}
+
+dependencies {
+    // 어노테이션은 전부 SOURCE retention 이라 compileOnly 로 충분하다 — APK 에 들어가지 않는다.
+    compileOnly("io.github.sonms:modifier-node-annotations:0.0.1")
+    ksp("io.github.sonms:modifier-node-processor:0.0.1")
+}
+```
+
+**두 좌표 모두 필요하다.** `ksp(...)` 는 프로세서 클래스패스만 채우기 때문에 어노테이션은
+별도로 컴파일 클래스패스에 올려야 한다. Room 이나 Moshi 와 같은 형태다.
+
+### 사용법
+
+노드를 평소대로 작성하고 어노테이션을 붙인다. 파라미터는 주 생성자의 `var` 프로퍼티 파라미터여야 한다.
+
+```kotlin
+@ModifierNodeFactory(name = "debugTint")
+internal class DebugTintNode(
+    @Invalidates(Draw) var color: Color,
+) : Modifier.Node(), DrawModifierNode {
+
+    // @Invalidates 를 쓰면 필수 — 아래 설명 참고.
+    override val shouldAutoInvalidate: Boolean get() = false
+
+    override fun ContentDrawScope.draw() {
+        drawContent()
+        drawRect(color)
+    }
+}
+```
+
+생성물 (`DebugTintElement.kt`):
+
+```kotlin
+public fun Modifier.debugTint(color: Color): Modifier = this.then(DebugTintElement(color))
+
+internal class DebugTintElement(private val color: Color) : ModifierNodeElement<DebugTintNode>() {
+    override fun create() = DebugTintNode(color)
+    override fun update(node: DebugTintNode) {
+        if (node.color != color) { node.color = color; node.invalidateDraw() }
+    }
+    override fun InspectorInfo.inspectableProperties() { /* name + properties */ }
+    override fun equals(other: Any?): Boolean { /* 필드 단위 */ }
+    override fun hashCode(): Int { /* 필드 단위 */ }
+}
+```
+
+이후엔 여느 modifier 처럼 쓴다:
+
+```kotlin
+Box(modifier = Modifier.debugTint(Color.Red.copy(alpha = 0.2f)))
+```
+
+### 어노테이션
+
+| 어노테이션 | 대상 | 하는 일 |
+|---|---|---|
+| `@ModifierNodeFactory(name, visibility)` | Node 클래스 | 생성 트리거. `name` 을 비우면 클래스명에서 `Node` 접미사를 떼어 유도한다. `visibility` 는 확장 함수의 가시성이며, Element 는 항상 `internal` |
+| `@Invalidates(vararg InvalidationScope)` | `var` 파라미터 | 이 파라미터가 바뀔 때 무효화할 범위. 미지정 시 노드가 구현한 모든 범위. `None` 은 무효화 없음 |
+| `@SkipWhenFalse` / `@SkipWhenTrue` | `Boolean` 파라미터 | 조건 불충족 시 생성 함수가 `this` 를 반환한다 — 노드를 아예 attach 하지 않는다. 여럿이면 OR |
+| `@OnChange` | `var` 파라미터 | 값이 바뀌면 생성된 `update()` 가 노드의 `fun on<Name>Changed()` 를 호출한다. 코루틴 재구독이나 effect 재시작에 쓴다 |
+
+`InvalidationScope` 는 `Measure`, `Placement`, `Draw`, `Semantics`, `ParentData`, `None`.
+생성된 `update()` 는 계층을 접는다 — `Measure > Placement > Draw` 중 가장 상위 하나만 호출된다.
+
+### `shouldAutoInvalidate = false`
+
+Compose 는 `update()` 직후 노드의 모든 capability 를 자동 무효화한다. 이 override 가 없으면
+`@Invalidates` 의 파라미터 단위 제어가 no-op 이 되므로, 프로세서가 선언을 강제한다:
+
+```kotlin
+override val shouldAutoInvalidate: Boolean get() = false
+```
+
+지원되는 문서화된 API 이며, Compose 자체 `graphicsLayer` / `paint` 모디파이어가 같은 패턴을 쓴다.
+
+### 한계
+
+- 생성 함수에 default argument 를 재현하지 못한다 (KSP 가 기본값 표현식을 못 읽는다) — 호출부에서 전 인자를 넘겨야 한다.
+- 지원하는 노드 인터페이스는 `DrawModifierNode` 와 `LayoutModifierNode` 뿐이다.
+- 제네릭 Node 와 다중 타입 파라미터는 검증되지 않았다.
+- `equals` 는 파라미터 타입의 `equals` 안정성에 의존한다. 함수 타입은 경고하지만 그 밖의 불안정 타입은 사용자 책임이다.
 
 ---
 

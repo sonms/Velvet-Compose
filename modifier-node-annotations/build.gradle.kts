@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.vanniktech)
+    alias(libs.plugins.dokka)
 }
 
 // Consumed by Android library modules that target JVM 11.
@@ -17,6 +18,9 @@ kotlin {
         jvmTarget.set(JvmTarget.JVM_11)
     }
 }
+
+// Dokka 를 붙이면 vanniktech 가 빈 javadoc jar 대신 Dokka 산출물을 배포에 싣는다.
+// Applying Dokka makes vanniktech publish the Dokka output instead of an empty javadoc jar.
 
 val velvetVersion = "0.0.1"
 
