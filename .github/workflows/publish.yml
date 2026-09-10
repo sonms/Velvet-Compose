@@ -7,6 +7,8 @@ on:
     tags:
       - 'wheelpicker-v*'
       - 'ratingbar-v*'
+      - 'modifier-node-annotations-v*'
+      - 'modifier-node-processor-v*'
 
 jobs:
   publish:
@@ -43,10 +45,20 @@ jobs:
           MODULE="${TAG%-v*}"
           VERSION="${TAG##*-v}"
 
-          if [[ "$MODULE" != "wheelpicker" && "$MODULE" != "ratingbar" ]]; then
-            echo "Unknown module '$MODULE' derived from tag '$TAG'" >&2
-            exit 1
-          fi
+          # Android library modules test the release variant; Kotlin JVM modules have no
+          # variants, and the processor's real verification lives in :modifier-node-sample.
+          case "$MODULE" in
+            wheelpicker|ratingbar)
+              TEST_TASKS=":$MODULE:testReleaseUnitTest"
+              ;;
+            modifier-node-annotations|modifier-node-processor)
+              TEST_TASKS=":$MODULE:test :modifier-node-sample:testDebugUnitTest :modifier-node-sample:testReleaseUnitTest"
+              ;;
+            *)
+              echo "Unknown module '$MODULE' derived from tag '$TAG'" >&2
+              exit 1
+              ;;
+          esac
 
           DECLARED_VERSION=$(grep -oP '(?<=val velvetVersion = ")[^"]+' "$MODULE/build.gradle.kts")
           if [[ "$DECLARED_VERSION" != "$VERSION" ]]; then
@@ -56,9 +68,10 @@ jobs:
 
           echo "module=$MODULE" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "test_tasks=$TEST_TASKS" >> "$GITHUB_OUTPUT"
 
       - name: Run module tests
-        run: ./gradlew :${{ steps.release.outputs.module }}:testReleaseUnitTest --no-configuration-cache
+        run: ./gradlew ${{ steps.release.outputs.test_tasks }} --no-configuration-cache
 
       - name: Publish and release to Maven Central
         env:

@@ -21,6 +21,12 @@ Velvet provides silky-smooth UI components with full customization support.
 | 🎡 **WheelPicker** | [![Maven Central](https://img.shields.io/maven-central/v/io.github.sonms/wheelpicker.svg)](https://central.sonatype.com/artifact/io.github.sonms/wheelpicker) | iOS-style 3D wheel picker with infinite scroll |
 | ⭐ **RatingBar** | [![Maven Central](https://img.shields.io/maven-central/v/io.github.sonms/ratingbar.svg)](https://central.sonatype.com/artifact/io.github.sonms/ratingbar) | Customizable rating bar with spring animation & haptic feedback |
 
+## 🧩 Tooling
+
+| Module | Maven Central | Description |
+|---|---|---|
+| 🧩 **Modifier.Node Codegen** | [![Maven Central](https://img.shields.io/maven-central/v/io.github.sonms/modifier-node-processor.svg)](https://central.sonatype.com/artifact/io.github.sonms/modifier-node-processor) | KSP processor that generates `ModifierNodeElement` + `Modifier` extension from a `Modifier.Node` |
+
 ---
 
 ## 🚀 Getting Started
@@ -361,6 +367,107 @@ RatingBar(
 |---|---|
 | `StepSize.FULL` | Select in increments of 1.0 |
 | `StepSize.HALF` | Select in increments of 0.5 |
+
+---
+
+## 🧩 Modifier.Node Codegen
+
+Write the `Modifier.Node` — KSP generates the `ModifierNodeElement` and the `Modifier` extension
+function for you. It removes the boilerplate wall that keeps people on `composed { }`.
+
+> Developer tooling for people who write `Modifier.Node` by hand (library authors).
+> Single maintainer, no SLA, no API compatibility guarantee.
+> Design notes: [`ARCHITECTURE.md`](ARCHITECTURE.md) · vs `composed`: [`COMPARISON.md`](modifier-node-sample/COMPARISON.md)
+
+### Setup
+
+```kotlin
+plugins {
+    id("com.google.devtools.ksp")
+}
+
+dependencies {
+    // Annotations are SOURCE retention, so compileOnly is enough — they never reach your APK.
+    compileOnly("io.github.sonms:modifier-node-annotations:0.0.1")
+    ksp("io.github.sonms:modifier-node-processor:0.0.1")
+}
+```
+
+**Both coordinates are required.** `ksp(...)` only populates the processor classpath, so the
+annotations have to be on your compile classpath separately — the same shape as Room or Moshi.
+
+### Usage
+
+Write the node as usual and annotate it. Parameters must be `var` property parameters of the
+primary constructor.
+
+```kotlin
+@ModifierNodeFactory(name = "debugTint")
+internal class DebugTintNode(
+    @Invalidates(Draw) var color: Color,
+) : Modifier.Node(), DrawModifierNode {
+
+    // Required whenever you use @Invalidates — see below.
+    override val shouldAutoInvalidate: Boolean get() = false
+
+    override fun ContentDrawScope.draw() {
+        drawContent()
+        drawRect(color)
+    }
+}
+```
+
+Generated for you (`DebugTintElement.kt`):
+
+```kotlin
+public fun Modifier.debugTint(color: Color): Modifier = this.then(DebugTintElement(color))
+
+internal class DebugTintElement(private val color: Color) : ModifierNodeElement<DebugTintNode>() {
+    override fun create() = DebugTintNode(color)
+    override fun update(node: DebugTintNode) {
+        if (node.color != color) { node.color = color; node.invalidateDraw() }
+    }
+    override fun InspectorInfo.inspectableProperties() { /* name + properties */ }
+    override fun equals(other: Any?): Boolean { /* per-field */ }
+    override fun hashCode(): Int { /* per-field */ }
+}
+```
+
+Then call it like any other modifier:
+
+```kotlin
+Box(modifier = Modifier.debugTint(Color.Red.copy(alpha = 0.2f)))
+```
+
+### Annotations
+
+| Annotation | Target | What it does |
+|---|---|---|
+| `@ModifierNodeFactory(name, visibility)` | Node class | Triggers generation. `name` defaults to the class name minus `Node`. `visibility` applies to the extension function — the Element is always `internal` |
+| `@Invalidates(vararg InvalidationScope)` | `var` parameter | Which scopes to invalidate when this parameter changes. Defaults to every scope the node implements. `None` means no invalidation |
+| `@SkipWhenFalse` / `@SkipWhenTrue` | `Boolean` parameter | The generated function returns `this` when the condition fails — the node is never attached. Multiple markers are OR-joined |
+| `@OnChange` | `var` parameter | The generated `update()` calls the node's `fun on<Name>Changed()` when the value changes. Use it to re-subscribe a coroutine or restart an effect |
+
+`InvalidationScope` is `Measure`, `Placement`, `Draw`, `Semantics`, `ParentData` or `None`.
+The generated `update()` folds the hierarchy — `Measure > Placement > Draw`, only the highest one fires.
+
+### `shouldAutoInvalidate = false`
+
+Compose auto-invalidates every capability of a node right after `update()`. Without this override,
+per-parameter `@Invalidates` control is a no-op, so the processor requires the declaration:
+
+```kotlin
+override val shouldAutoInvalidate: Boolean get() = false
+```
+
+It is a supported, documented API — Compose's own `graphicsLayer` and `paint` modifiers use the same pattern.
+
+### Limitations
+
+- Default arguments are not reproduced on the generated function (KSP cannot read default expressions) — pass every argument at the call site.
+- Supported node interfaces are `DrawModifierNode` and `LayoutModifierNode` only.
+- Generic nodes and multiple type parameters are unverified.
+- `equals` relies on your parameter types having stable `equals`. Function-type parameters produce a warning; other unstable types are on you.
 
 ---
 

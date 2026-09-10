@@ -23,3 +23,6 @@ rootProject.name = "VelvetCompose"
 include(":app")
 include(":wheelpicker")
 include(":ratingbar")
+include(":modifier-node-annotations")
+include(":modifier-node-processor")
+include(":modifier-node-sample")
