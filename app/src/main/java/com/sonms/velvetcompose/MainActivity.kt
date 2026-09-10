@@ -42,7 +42,7 @@ import com.sonms.wheelpicker.state.rememberWheelPickerState
 import com.sonms.wheelpicker.style.WheelPickerDefaults
 
 enum class SampleType {
-    VERTICAL_TIME, HORIZONTAL_TIME, RATING_BAR
+    VERTICAL_TIME, HORIZONTAL_TIME, RATING_BAR, MODIFIER_NODE
 }
 
 class MainActivity : ComponentActivity() {
@@ -79,12 +79,19 @@ class MainActivity : ComponentActivity() {
                             Button(onClick = { selectedSample = SampleType.RATING_BAR }) {
                                 Text(text = "Toggle Rating Star")
                             }
+
+                            Spacer(modifier = Modifier.weight(1f))
+
+                            Button(onClick = { selectedSample = SampleType.MODIFIER_NODE }) {
+                                Text(text = "Modifier.Node")
+                            }
                         }
 
                         when (selectedSample) {
                             SampleType.VERTICAL_TIME -> VerticalTimePickerSample()
                             SampleType.HORIZONTAL_TIME -> HorizontalTimePickerSample()
                             SampleType.RATING_BAR -> VelvetRatingBarSample()
+                            SampleType.MODIFIER_NODE -> ModifierNodeShowcase()
                         }
                     }
                 }

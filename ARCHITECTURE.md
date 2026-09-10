@@ -3,6 +3,7 @@
 > 브랜치: `feat/modifier-node-codegen` — `master` 미병합. 갈래 B 진행 중 (§8·§9).
 > 스택: Kotlin 2.0.21 · AGP 8.13.2 · Compose BOM 2026.04.01 (ui 1.12.0-beta02) · KSP 2.0.21-1.0.28 · KotlinPoet 1.18.1
 > 모듈: `:modifier-node-annotations` · `:modifier-node-processor` · `:modifier-node-sample`(예제+테스트, 미배포)
+> 라이브 데모: `:app` → "Modifier.Node" 탭 (`ModifierNodeShowcase.kt`, 노드는 `com.sonms.velvetcompose.modifiernode`)
 
 사용법은 [`modifier-node-annotations/README.md`](modifier-node-annotations/README.md),
 `composed` 와의 비교는 [`modifier-node-sample/COMPARISON.md`](modifier-node-sample/COMPARISON.md).
@@ -183,6 +184,7 @@ Velvet-Compose 내부 인프라 + `Modifier.Node` 학습 목적. 1인 유지보�
 - [x] `@OnChange` (`onChange_fires_only_when_param_changes`)
 - [x] 예제 + dogfood(`fadingEdge`) + `composed` 비교 2케이스
 - [x] `modifier-node-annotations/README.md`, `:modifier-node-sample` 정리
+- [x] `:app` 라이브 데모 — `gridOverlay`(`@SkipWhenFalse`+`@Invalidates(Draw)`), `squareThumbnail`(Measure/Draw 계층 접힘)
 
 **보류/미완:**
 
