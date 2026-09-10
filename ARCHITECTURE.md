@@ -186,8 +186,12 @@ Velvet-Compose 내부 인프라 + `Modifier.Node` 학습 목적. 1인 유지보�
 - [x] `modifier-node-annotations/README.md`, `:modifier-node-sample` 정리
 - [x] `:app` 라이브 데모 — `gridOverlay`(`@SkipWhenFalse`+`@Invalidates(Draw)`), `squareThumbnail`(Measure/Draw 계층 접힘)
 
+- [x] 배포 설정 — `:modifier-node-annotations` / `:modifier-node-processor` 에
+  `mavenPublishing` (`io.github.sonms`, 0.0.1), `publish.yml` 태그·테스트 태스크 분기, CI 조립 추가
+
 **보류/미완:**
 
+- `master` 병합 + 태그 푸시 (= 실제 Maven Central 릴리스) — 미실행
 - `@Default` — 검토만(부록 A), 구현 보류
 - `master` 병합 전: 커밋 squash 여부
 - (범위 밖) 노드 인터페이스 확장, default 대신 오버로드 체인, IDE inspection, 프로세서 단위 테스트

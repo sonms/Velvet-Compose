@@ -38,4 +38,6 @@ jobs:
         run: >
           ./gradlew testDebugUnitTest
           :app:assembleDebug :wheelpicker:assembleDebug :ratingbar:assembleDebug
+          :modifier-node-annotations:build :modifier-node-processor:build
+          :modifier-node-sample:assembleDebug :modifier-node-sample:testReleaseUnitTest
           --no-configuration-cache

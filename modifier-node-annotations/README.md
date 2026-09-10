@@ -23,6 +23,17 @@ dependencies {
 }
 ```
 
+배포 좌표는 `io.github.sonms:modifier-node-annotations` / `io.github.sonms:modifier-node-processor` 로
+잡혀 있다(**아직 Maven Central 에 올라가지 않았다**). 올라간 뒤에는 이렇게 쓴다:
+
+```kotlin
+dependencies {
+    // 어노테이션은 전부 SOURCE retention 이라 compileOnly 로 충분하다.
+    compileOnly("io.github.sonms:modifier-node-annotations:0.0.1")
+    ksp("io.github.sonms:modifier-node-processor:0.0.1")
+}
+```
+
 ## 사용법
 
 `Modifier.Node` 서브클래스를 평소대로 작성하고 `@ModifierNodeFactory` 를 붙인다.
