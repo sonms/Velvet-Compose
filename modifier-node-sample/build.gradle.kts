@@ -39,5 +39,8 @@ dependencies {
     testImplementation(libs.kotlin.reflect)
     testImplementation(platform(libs.androidx.compose.bom))
     testImplementation(libs.androidx.compose.ui.test.junit4)
+    // Robolectric 이 두 변형 모두에서 ComponentActivity 를 찾을 수 있어야 한다 (debug 전용이면 release 테스트가 깨진다).
+    // Robolectric needs ComponentActivity in both variants — a debug-only manifest breaks the release unit tests.
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+    releaseImplementation(libs.androidx.compose.ui.test.manifest)
 }

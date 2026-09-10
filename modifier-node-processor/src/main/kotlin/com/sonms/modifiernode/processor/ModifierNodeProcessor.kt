@@ -134,6 +134,7 @@ class ModifierNodeProcessor(
                     "Otherwise Compose auto-invalidates every capability after update() and @Invalidates is a no-op.",
                 node,
             )
+            return
         }
 
         // @SkipWhenFalse / @SkipWhenTrue → 확장 함수 앞에 가드 삽입.
@@ -271,11 +272,15 @@ class ModifierNodeProcessor(
                                     false.also { logger.error("@Invalidates($s) not supported yet (MVP)", p) }
                                 Scope.None -> true
                             }
-                            if (!ok && s != Scope.Semantics && s != Scope.ParentData) {
-                                logger.error(
-                                    "@Invalidates($s) on '$name' but ${node.simpleName.asString()} does not implement the matching node interface",
-                                    p,
-                                )
+                            if (!ok) {
+                                if (s != Scope.Semantics && s != Scope.ParentData) {
+                                    logger.error(
+                                        "@Invalidates($s) on '$name' but ${node.simpleName.asString()} does not implement the matching node interface",
+                                        p,
+                                    )
+                                }
+                                // 잘못된 범위로 생성하면 컴파일 안 되는 invalidate 호출이 나온다 — 방출 자체를 막는다.
+                                valid = false
                             }
                         }
                         declared
