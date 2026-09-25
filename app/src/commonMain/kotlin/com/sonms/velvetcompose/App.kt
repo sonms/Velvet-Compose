@@ -1,9 +1,5 @@
 package com.sonms.velvetcompose
 
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -45,55 +41,59 @@ enum class SampleType {
     VERTICAL_TIME, HORIZONTAL_TIME, RATING_BAR, MODIFIER_NODE
 }
 
-class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            var selectedSample by remember { mutableStateOf(SampleType.VERTICAL_TIME) }
+/**
+ * ModifierNodeShowcase 는 :modifier-node-processor (KSP) 코드젠에 의존하는 Android 전용 데모라
+ * 플랫폼별 actual 로 갈아끼운다. iOS 쪽은 안내 텍스트만 보여준다.
+ *
+ * ModifierNodeShowcase depends on Android-only KSP codegen, so it's swapped in per platform —
+ * iOS just shows a placeholder.
+ */
+@Composable
+expect fun ModifierNodeShowcaseHost()
 
-            VelvetComposeTheme(darkTheme = false) {
-                Scaffold (
-                    modifier = Modifier
-                        .fillMaxSize(),
-                ) { innerPadding ->
-                    Column (
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(innerPadding),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center,
-                    ) {
-                        Row(modifier = Modifier.fillMaxWidth()) {
-                            Button(onClick = {
-                                selectedSample = if (selectedSample == SampleType.VERTICAL_TIME)
-                                    SampleType.HORIZONTAL_TIME
-                                else
-                                    SampleType.VERTICAL_TIME
-                            }) {
-                                Text(text = "Toggle Time Picker")
-                            }
+@Composable
+fun App() {
+    var selectedSample by remember { mutableStateOf(SampleType.VERTICAL_TIME) }
 
-                            Spacer(modifier = Modifier.weight(1f))
-
-                            Button(onClick = { selectedSample = SampleType.RATING_BAR }) {
-                                Text(text = "Toggle Rating Star")
-                            }
-
-                            Spacer(modifier = Modifier.weight(1f))
-
-                            Button(onClick = { selectedSample = SampleType.MODIFIER_NODE }) {
-                                Text(text = "Modifier.Node")
-                            }
-                        }
-
-                        when (selectedSample) {
-                            SampleType.VERTICAL_TIME -> VerticalTimePickerSample()
-                            SampleType.HORIZONTAL_TIME -> HorizontalTimePickerSample()
-                            SampleType.RATING_BAR -> VelvetRatingBarSample()
-                            SampleType.MODIFIER_NODE -> ModifierNodeShowcase()
-                        }
+    VelvetComposeTheme(darkTheme = false) {
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+        ) { innerPadding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    Button(onClick = {
+                        selectedSample = if (selectedSample == SampleType.VERTICAL_TIME)
+                            SampleType.HORIZONTAL_TIME
+                        else
+                            SampleType.VERTICAL_TIME
+                    }) {
+                        Text(text = "Toggle Time Picker")
                     }
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    Button(onClick = { selectedSample = SampleType.RATING_BAR }) {
+                        Text(text = "Toggle Rating Star")
+                    }
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    Button(onClick = { selectedSample = SampleType.MODIFIER_NODE }) {
+                        Text(text = "Modifier.Node")
+                    }
+                }
+
+                when (selectedSample) {
+                    SampleType.VERTICAL_TIME -> VerticalTimePickerSample()
+                    SampleType.HORIZONTAL_TIME -> HorizontalTimePickerSample()
+                    SampleType.RATING_BAR -> VelvetRatingBarSample()
+                    SampleType.MODIFIER_NODE -> ModifierNodeShowcaseHost()
                 }
             }
         }
@@ -119,7 +119,6 @@ fun VelvetRatingBarSample() {
         )
     }
 }
-
 
 @Composable
 fun VerticalTimePickerSample() {

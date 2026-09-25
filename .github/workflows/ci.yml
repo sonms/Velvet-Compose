@@ -69,9 +69,10 @@ jobs:
           org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8
           EOF
 
-      - name: Build and test iOS targets for wheelpicker/ratingbar
+      - name: Build and test iOS targets for wheelpicker/ratingbar/app
         run: >
           ./gradlew
           :wheelpicker:iosSimulatorArm64Test :ratingbar:iosSimulatorArm64Test
           :wheelpicker:linkDebugTestIosArm64 :ratingbar:linkDebugTestIosArm64
+          :app:linkDebugFrameworkIosArm64 :app:linkDebugFrameworkIosSimulatorArm64
           --no-configuration-cache
