@@ -1,17 +1,18 @@
 package com.sonms.velvetcompose
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.style.styleable
 import androidx.compose.material3.Button
@@ -66,7 +67,17 @@ fun App() {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
-                Row(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    // 버튼들은 항상 한 줄로 그려진다 — weight()+Spacer로 남는 공간을 나누던 이전 방식은
+                    // 플랫폼별 폰트 메트릭 차이로 폭이 좁아지면 텍스트가 세로로 wrap되는 문제가 있었다.
+                    // Buttons always render on one line — the previous weight()+Spacer split let
+                    // platform font-metric differences squeeze a button's width enough to wrap its
+                    // text vertically (worst on iOS's system font).
                     Button(onClick = {
                         selectedSample = if (selectedSample == SampleType.VERTICAL_TIME)
                             SampleType.HORIZONTAL_TIME
@@ -76,13 +87,9 @@ fun App() {
                         Text(text = "Toggle Time Picker")
                     }
 
-                    Spacer(modifier = Modifier.weight(1f))
-
                     Button(onClick = { selectedSample = SampleType.RATING_BAR }) {
                         Text(text = "Toggle Rating Star")
                     }
-
-                    Spacer(modifier = Modifier.weight(1f))
 
                     Button(onClick = { selectedSample = SampleType.MODIFIER_NODE }) {
                         Text(text = "Modifier.Node")
