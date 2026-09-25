@@ -41,3 +41,37 @@ jobs:
           :modifier-node-annotations:build :modifier-node-processor:build
           :modifier-node-sample:assembleDebug :modifier-node-sample:testReleaseUnitTest
           --no-configuration-cache
+
+  build-ios:
+    runs-on: macos-14
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: temurin
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Create gradle.properties
+        run: |
+          cat >> gradle.properties <<'EOF'
+          android.useAndroidX=true
+          android.nonTransitiveRClass=true
+          kotlin.code.style=official
+          org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8
+          EOF
+
+      - name: Build and test iOS targets for wheelpicker/ratingbar
+        run: >
+          ./gradlew
+          :wheelpicker:iosSimulatorArm64Test :ratingbar:iosSimulatorArm64Test
+          :wheelpicker:linkDebugTestIosArm64 :ratingbar:linkDebugTestIosArm64
+          --no-configuration-cache

@@ -1,9 +1,42 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
+    alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.compose.multiplatform)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.vanniktech)
     alias(libs.plugins.dokka)
+}
+
+kotlin {
+    androidTarget {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_11)
+        }
+    }
+
+    iosArm64()
+    iosSimulatorArm64()
+
+    sourceSets {
+        commonMain.dependencies {
+            implementation(compose.runtime)
+            implementation(compose.foundation)
+            implementation(compose.material3)
+            implementation(compose.ui)
+            implementation(libs.kotlinx.collections.immutable)
+        }
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+        }
+        val androidInstrumentedTest by getting {
+            dependencies {
+                implementation(libs.androidx.junit)
+                implementation(libs.androidx.espresso.core)
+            }
+        }
+    }
 }
 
 android {
@@ -12,8 +45,6 @@ android {
 
     defaultConfig {
         minSdk = 24
-
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
     }
 
@@ -30,9 +61,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlinOptions {
-        jvmTarget = "11"
-    }
 }
 
 composeCompiler {
@@ -40,34 +68,13 @@ composeCompiler {
     metricsDestination = layout.buildDirectory.dir("compose_metrics")
 }
 
-kotlin {
-    compilerOptions {
-        freeCompilerArgs.addAll(
-            "-opt-in=androidx.compose.foundation.style.ExperimentalFoundationStyleApi",
-        )
-    }
-}
-
-dependencies {
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.compose.material3)
-    implementation(libs.kotlinx.collections.immutable)
-    implementation(libs.androidx.compose.foundation)
-    implementation(libs.androidx.compose.ui)
-    implementation(libs.androidx.compose.ui.tooling.preview)
-    debugImplementation(libs.androidx.compose.ui.tooling)
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-}
-
 dokka {
-    dokkaSourceSets.main {
+    dokkaSourceSets.named("commonMain") {
         enableAndroidDocumentationLink.set(false)
     }
 }
 
-val velvetVersion = "0.0.2"
+val velvetVersion = "0.0.3"
 
 mavenPublishing {
     coordinates(
@@ -78,7 +85,7 @@ mavenPublishing {
 
     pom {
         name.set("VelvetCompose WheelPicker")
-        description.set("Bring the classic iOS 3D wheel picker to your Jetpack Compose app\uD83D\uDE80 Features infinite scrolling and dynamic 3D graphic layers.")
+        description.set("Bring the classic iOS 3D wheel picker to your Jetpack Compose app🚀 Features infinite scrolling and dynamic 3D graphic layers.")
         url.set("https://github.com/sonms/Velvet-Compose")
 
         licenses {

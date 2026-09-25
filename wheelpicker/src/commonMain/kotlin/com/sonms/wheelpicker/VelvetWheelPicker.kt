@@ -1,5 +1,6 @@
 package com.sonms.wheelpicker
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -12,7 +13,6 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.style.styleable
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
@@ -191,10 +191,7 @@ internal fun <T> WheelPickerImpl(
                     else
                         Modifier.width(itemSize).height(itemSize)
                 )
-                .styleable {
-                    background(style.selector.background)
-                    shape(style.selector.shape)
-                }
+                .background(style.selector.background, style.selector.shape)
         )
 
         if (style.selector.showDivider) {

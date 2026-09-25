@@ -4,6 +4,9 @@
 ### Android ###
 # Gradle files
 .gradle/
+
+# Kotlin compiler/Gradle plugin build cache
+.kotlin/
 build/
 
 # Local configuration file (sdk path, etc)

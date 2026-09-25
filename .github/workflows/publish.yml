@@ -12,7 +12,12 @@ on:
 
 jobs:
   publish:
-    runs-on: ubuntu-latest
+    # macOS is required because wheelpicker/ratingbar are now Kotlin Multiplatform
+    # modules with iOS targets — publishing them cross-compiles and signs iOS
+    # klibs, which needs a macOS host toolchain (Xcode). The modifier-node-*
+    # modules stay JVM-only, but running the whole workflow on macOS keeps the
+    # tag-dispatch logic simple instead of branching runner OS by module.
+    runs-on: macos-latest
     permissions:
       contents: read
 

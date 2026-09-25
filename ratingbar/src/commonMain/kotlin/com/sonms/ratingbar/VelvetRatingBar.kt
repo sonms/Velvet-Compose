@@ -244,10 +244,10 @@ private fun createStarPath(size: androidx.compose.ui.geometry.Size): Path {
     val outerRadius = size.width / 2f
     val innerRadius = outerRadius * 0.4f
     val numPoints = 5
-    val angleOffset = -Math.PI / 2
+    val angleOffset = -kotlin.math.PI / 2
 
     for (i in 0 until numPoints * 2) {
-        val angle = angleOffset + i * Math.PI / numPoints
+        val angle = angleOffset + i * kotlin.math.PI / numPoints
         val radius = if (i % 2 == 0) outerRadius else innerRadius
         val x = cx + (radius * kotlin.math.cos(angle)).toFloat()
         val y = cy + (radius * kotlin.math.sin(angle)).toFloat()
