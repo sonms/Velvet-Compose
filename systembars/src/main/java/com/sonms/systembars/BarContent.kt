@@ -11,7 +11,7 @@ import androidx.compose.ui.graphics.Color
  */
 @Immutable
 public sealed interface BarContent {
-    /** Sample the rendered content behind the bar (via a `GraphicsLayer`). Compose-drawn content only. */
+    /** Sample the Compose content drawn inside the modifier (re-drawn into a tiny software bitmap). */
     public data object Auto : BarContent
 
     /**
