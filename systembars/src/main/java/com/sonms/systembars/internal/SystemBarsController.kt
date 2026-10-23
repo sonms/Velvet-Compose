@@ -12,7 +12,9 @@ import android.util.Log
 import android.view.PixelCopy
 import android.view.View
 import android.view.Window
+import androidx.annotation.RequiresApi
 import androidx.compose.ui.graphics.toArgb
+import androidx.core.graphics.createBitmap
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -178,6 +180,7 @@ internal class SystemBarsController(
         copyNext(jobs, 0, settle)
     }
 
+    @RequiresApi(26) // callers return early below API 26
     private fun copyNext(jobs: List<Pair<BarSlot, Rect>>, index: Int, settle: Boolean) {
         if (index >= jobs.size) {
             windowSampling = false
@@ -194,7 +197,7 @@ internal class SystemBarsController(
             return
         }
         val (slot, rect) = jobs[index]
-        val bitmap = Bitmap.createBitmap(SAMPLE_W, SAMPLE_H, Bitmap.Config.ARGB_8888)
+        val bitmap = createBitmap(SAMPLE_W, SAMPLE_H, Bitmap.Config.ARGB_8888)
         try {
             PixelCopy.request(window, rect, bitmap, { result ->
                 if (result == PixelCopy.SUCCESS) slot.sampleArgb = averageArgb(bitmap)

@@ -1,5 +1,6 @@
 package com.sonms.systembars
 
+import android.annotation.SuppressLint
 import android.os.Trace
 import android.util.Log
 import android.view.View
@@ -113,6 +114,9 @@ private class SystemBarsNode(
     // Not an auto-invalidating node: we manage our own redraw.
     override val shouldAutoInvalidate: Boolean get() = false
 
+    // Read once on attach on purpose: the controller is stable per window/view (SystemBarsHost updates its config
+    // in place instead of replacing it) and LocalView is constant for a composition, so there is nothing to observe.
+    @SuppressLint("SuspiciousCompositionLocalModifierRead")
     override fun onAttach() {
         val c = currentValueOf(LocalSystemBarsController)
         if (c == null) {
