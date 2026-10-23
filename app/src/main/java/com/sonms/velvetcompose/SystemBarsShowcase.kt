@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.DialogProperties
 import com.sonms.systembars.BarContent
+import com.sonms.systembars.BarPaint
 import com.sonms.systembars.SystemBarsDialog
 import com.sonms.systembars.systemBars
 
@@ -56,6 +57,7 @@ private enum class BarsDemo(val label: String) {
     DIALOG("Dialog"),
     SURFACE("PixelCopy"),
     STACKED("겹침(가려진 노드)"),
+    PAINT("바 칠하기"),
 }
 
 private val bandColors = listOf(
@@ -74,6 +76,7 @@ fun SystemBarsShowcase(onBack: () -> Unit, initialDemo: String? = null) {
             BarsDemo.DIALOG -> DialogDemo()
             BarsDemo.SURFACE -> SurfaceDemo()
             BarsDemo.STACKED -> StackedDemo()
+            BarsDemo.PAINT -> PaintDemo()
         }
 
         // 컨트롤은 바 영역을 피해 안쪽에 둔다 (statusBarsPadding / navigationBarsPadding).
@@ -97,8 +100,10 @@ fun SystemBarsShowcase(onBack: () -> Unit, initialDemo: String? = null) {
 
 /** 흰/검정/파랑/노랑/그라데이션 띠를 스크롤하면서 `Auto` 가 아이콘을 뒤집는지 본다. */
 @Composable
-private fun ScrollDemo(sampled: Boolean) {
-    LazyColumn((if (sampled) Modifier.systemBars(BarContent.Auto, BarContent.Auto) else Modifier).fillMaxSize()) {
+private fun ScrollDemo(sampled: Boolean, paint: BarPaint = BarPaint.None) {
+    LazyColumn(
+        (if (sampled) Modifier.systemBars(BarContent.Auto, BarContent.Auto, paint, paint) else Modifier).fillMaxSize(),
+    ) {
         itemsIndexed(List(30) { it }) { i, _ ->
             val c = bandColors[i % bandColors.size]
             Box(
@@ -109,6 +114,26 @@ private fun ScrollDemo(sampled: Boolean) {
                 contentAlignment = Alignment.Center,
             ) {
                 Text("#$i", color = if (c.luminanceIsLow()) Color.White else Color.Black)
+            }
+        }
+    }
+}
+
+/** 바 영역 칠하기: 투명(기본) / 샘플 색 단색 / 지정 색 단색. 스크롤하면서 상태바·내비바 띠를 본다. */
+@Composable
+private fun PaintDemo() {
+    var mode by remember { mutableStateOf("투명") }
+    val solid by androidx.compose.animation.animateColorAsState(Color(0xFF3F51B5), label = "barSolid")
+    val paint = when (mode) {
+        "샘플" -> BarPaint.Sampled
+        "단색" -> BarPaint.Solid(solid)
+        else -> BarPaint.None
+    }
+    Box(Modifier.fillMaxSize()) {
+        ScrollDemo(sampled = true, paint = paint)
+        Row(Modifier.align(Alignment.Center), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            listOf("투명", "샘플", "단색").forEach { m ->
+                FilterChip(selected = mode == m, onClick = { mode = m }, label = { Text(m) })
             }
         }
     }

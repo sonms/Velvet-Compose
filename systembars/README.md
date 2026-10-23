@@ -57,6 +57,33 @@ Modifier.systemBars(status = BarContent.Dark, navigation = BarContent.Inherit)
 Modifier.systemBars(status = BarContent.Background(palette.dominant))
 ```
 
+### 바 영역 칠하기 (`BarPaint`)
+
+기본은 **칠하지 않음(투명)** 이라 바 뒤에는 콘텐츠가 그대로 비친다. 바 영역을 직접 칠하려면 `statusPaint` / `navigationPaint` 를 쓴다.
+
+| 값 | 의미 |
+|---|---|
+| `None` (기본) | 칠하지 않는다 |
+| `Sampled` | 샘플링한 바 뒤 콘텐츠의 평균색으로 단색 칠 (`Auto` 일 때만. 샘플 간격마다 갱신) |
+| `Solid(color)` | 지정한 색으로 칠. `Auto` 와 함께 쓰면 **샘플링 없이** 이 색으로 아이콘 명암을 정한다 |
+
+```kotlin
+// 스크롤 콘텐츠가 바 밑으로 지나가도 상태바는 단색, 내비바는 투명
+Modifier.systemBars(statusPaint = BarPaint.Solid(colorScheme.surface))
+
+// 샘플 색을 단색 띠로 (이미지/그라데이션 위에서 바를 깔끔하게)
+Modifier.systemBars(statusPaint = BarPaint.Sampled, navigationPaint = BarPaint.Sampled)
+
+// 색 전환은 Compose 애니메이션으로
+val bar by animateColorAsState(target)
+Modifier.systemBars(statusPaint = BarPaint.Solid(bar))
+```
+
+- 윈도우 속성(`statusBarColor`)이 아니라 노드가 바 영역에 사각형을 한 번 더 그린다. 모든 API 레벨에서 같게 동작하고, API 35 의 edge-to-edge 강제와도 충돌하지 않는다.
+- 그 바를 **결정하는(스택에서 이기는) 노드만** 칠하고, 노드가 바와 겹치는 범위에서만 칠한다. 칠한 색이 있으면 아이콘 명암은 칠한 색을 기준으로 정한다.
+- `Sampled` 는 `AutoWindow` 와 같이 쓸 수 없다 (칠한 색이 윈도우 샘플에 다시 섞여 갱신되지 않음 → 무시).
+- `Solid` 는 불투명한 색을 권장한다.
+
 ### 여러 개가 겹칠 때
 
 한 윈도우의 레지스트리가 스택처럼 동작한다. **더 깊은 노드가 이기고, 깊이가 같으면 나중에 붙은 쪽이 이긴다.**
@@ -116,6 +143,7 @@ SystemBarsHost(
   기본 간격은 300ms 다. jank 비율은 라운드 편차가 너무 커서 지표로 쓰지 않았다. 스크롤이 무거운 화면에서는 직접 측정할 것.
 - `Auto` 는 **Compose 로 노드 안에 그려진 것만** 읽는다. blur / `RenderEffect` 같은 하드웨어 전용 효과, 노드 밖 배경,
   `SurfaceView` 는 반영되지 않는다 → `AutoWindow` 또는 `Background`.
+- **API 28 이하 3버튼 내비바**: 시스템이 `navigationBarColor`(`enableEdgeToEdge()` 는 반투명 스크림) 로 바를 채우므로, 그 색을 스크림으로 보고 아이콘을 고른다. 투명하게 둔 경우에는 보정하지 않는다.
 - `AutoWindow` 는 API 26 미만에서 동작하지 않는다. 샘플에 시스템 스크림이 이미 포함되므로 스크림 보정은 적용하지 않는다.
   `PixelCopy` 는 직전 프레임을 복사하므로 샘플 50ms 뒤 한 번 더 확인한다.
 - `PixelCopy` 를 `Auto` 의 기본으로 쓰는 안은 S8 에서 측정했지만 canvas 방식보다 나아지지 않아 채택하지 않았다.

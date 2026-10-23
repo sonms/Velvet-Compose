@@ -17,10 +17,25 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import com.sonms.systembars.BarContent
+import com.sonms.systembars.BarPaint
 import com.sonms.systembars.SystemBarsConfig
 
 /** Mutable per-bar entry owned by a modifier node. [sampleArgb] is the last sampled background. */
-internal class BarSlot(var content: BarContent, var sampleArgb: Int? = null)
+internal class BarSlot(var content: BarContent, var paint: BarPaint = BarPaint.None, var sampleArgb: Int? = null) {
+    /**
+     * What decides the icons. A solid paint over `Auto` *is* the background, so no sampling is needed;
+     * everything else (declared tones, `AutoWindow`) is left alone.
+     */
+    val effectiveContent: BarContent
+        get() {
+            val p = paint
+            return if (content == BarContent.Auto && p is BarPaint.Solid) BarContent.Background(p.color) else content
+        }
+
+    /** Paint that actually applies: `Sampled` needs `Auto`, because a window sample would include the paint itself. */
+    val effectivePaint: BarPaint
+        get() = if (paint == BarPaint.Sampled && content != BarContent.Auto) BarPaint.None else paint
+}
 
 /** Applies the winning [BarSlot]s to one window. Main thread only; never exposes Compose state. */
 internal class SystemBarsController(
@@ -107,7 +122,7 @@ internal class SystemBarsController(
     }
 
     private fun darkIconsFor(slot: BarSlot?, previous: Boolean?, scrim: Scrim?): Boolean? {
-        val content = slot?.content ?: return null
+        val content = slot?.effectiveContent ?: return null
         return when (content) {
             BarContent.Auto, BarContent.AutoWindow ->
                 slot.sampleArgb?.let { decider.decide(it, previous, scrim) }
@@ -121,12 +136,24 @@ internal class SystemBarsController(
     /** Scrim applies only to 3-button navigation (tappable inset) and never to window samples (already include it). */
     private fun navigationScrim(nav: BarSlot?): Scrim? {
         val model = config.scrimModel ?: return null
-        if (!config.contrastEnforced || Build.VERSION.SDK_INT < 29) return null
         if (nav?.content == BarContent.AutoWindow) return null
+        if (Build.VERSION.SDK_INT < 29) return legacyNavigationScrim()
+        if (!config.contrastEnforced) return null
         val tappable = ViewCompat.getRootWindowInsets(view)
             ?.getInsets(WindowInsetsCompat.Type.tappableElement())?.bottom ?: 0
         if (tappable <= 0) return null
         return Scrim(model.lightScrim.toArgb(), model.darkScrim.toArgb())
+    }
+
+    /**
+     * Below API 29 there is no contrast enforcement; the system simply fills the navigation bar with
+     * `navigationBarColor` (`enableEdgeToEdge()` makes it a translucent scrim). That color is readable and does
+     * not depend on our icon choice, so it is used as both candidates.
+     */
+    @Suppress("DEPRECATION") // the only way to read it below API 29
+    private fun legacyNavigationScrim(): Scrim? {
+        val color = window.navigationBarColor
+        return if ((color ushr 24) == 0) null else Scrim(color, color)
     }
 
     /** PixelCopy fallback; throttled by [SystemBarsConfig.intervalMillis]. No-op below API 26. */

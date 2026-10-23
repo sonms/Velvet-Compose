@@ -19,7 +19,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toPixelMap
+import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.core.view.WindowCompat
@@ -44,7 +48,11 @@ class SystemBarsInstrumentedTest {
     private var view: View? = null
 
     @Composable
-    private fun TestHost(config: SystemBarsConfig = fast, content: @Composable () -> Unit) {
+    private fun TestHost(
+        config: SystemBarsConfig = fast,
+        navigationBarColor: Int = android.graphics.Color.TRANSPARENT,
+        content: @Composable () -> Unit,
+    ) {
         val v = LocalView.current
         view = v
         val controller = remember(v, config) {
@@ -52,7 +60,7 @@ class SystemBarsInstrumentedTest {
             v.activity().window.apply {
                 WindowCompat.setDecorFitsSystemWindows(this, false)
                 statusBarColor = android.graphics.Color.TRANSPARENT
-                navigationBarColor = android.graphics.Color.TRANSPARENT
+                this.navigationBarColor = navigationBarColor
             }
             SystemBarsController(v.activity().window, v, config) { 40 }
         }
@@ -223,6 +231,92 @@ class SystemBarsInstrumentedTest {
         waitFor("inner (white) wins → dark icons") { statusDarkIcons() }
         inner = false
         waitFor("outer (black) takes over → light icons") { !statusDarkIcons() }
+    }
+
+    // ---- painting: bar height is injected as 40px by TestHost, so rows 0..39 are the status bar ----
+
+    private fun pixelAt(x: Int, y: Int): Color {
+        val map = rule.onRoot().captureToImage().toPixelMap()
+        return map[x, y]
+    }
+
+    private fun assertNear(message: String, expected: Color, actual: Color, tolerance: Float = 0.06f) {
+        val ok = kotlin.math.abs(expected.red - actual.red) <= tolerance &&
+            kotlin.math.abs(expected.green - actual.green) <= tolerance &&
+            kotlin.math.abs(expected.blue - actual.blue) <= tolerance
+        assertEquals("$message (expected $expected, was $actual)", true, ok)
+    }
+
+    @Test
+    fun paint_none_leavesContentVisibleBehindTheBar() {
+        rule.setContent { TestHost { Box(Modifier.systemBars().fillMaxSize().drawBehind { drawRect(Color.Black) }) } }
+        rule.waitForIdle()
+        assertNear("no paint → content", Color.Black, pixelAt(20, 10))
+    }
+
+    @Test
+    fun paint_solid_paintsOnlyTheBarArea_andDecidesTheIcons() {
+        rule.setContent {
+            TestHost {
+                Box(
+                    Modifier
+                        .systemBars(statusPaint = BarPaint.Solid(Color.White))
+                        .fillMaxSize()
+                        .drawBehind { drawRect(Color.Black) },
+                )
+            }
+        }
+        waitFor("white paint over black content → dark icons") { statusDarkIcons() }
+        assertNear("bar area is painted", Color.White, pixelAt(20, 10))
+        assertNear("below the bar the content is untouched", Color.Black, pixelAt(20, 200))
+    }
+
+    @Test
+    fun paint_sampled_paintsTheAverageOfTheContentBehind() {
+        rule.setContent {
+            TestHost {
+                Box(
+                    Modifier
+                        .systemBars(statusPaint = BarPaint.Sampled)
+                        .fillMaxSize()
+                        .drawBehind { drawRect(Brush.horizontalGradient(listOf(Color.Black, Color.White))) },
+                )
+            }
+        }
+        // black → white gradient averages to mid-gray; the left edge of the bar must no longer be black
+        rule.waitUntil(5_000) { pixelAt(5, 10).red > 0.3f }
+        assertNear("left edge is the average, not the content", Color(0.5f, 0.5f, 0.5f), pixelAt(5, 10), 0.12f)
+        assertNear("right edge is the average too", Color(0.5f, 0.5f, 0.5f), pixelAt(rule.onRoot().fetchSemanticsNode().size.width - 5, 10), 0.12f)
+    }
+
+    @Test
+    fun paint_onlyTheStackWinnerPaints() {
+        rule.setContent {
+            TestHost {
+                Box(Modifier.systemBars(BarContent.Light, statusPaint = BarPaint.Solid(Color.Red)).fillMaxSize().drawBehind { drawRect(Color.Black) }) {
+                    // deeper node wins the status bar, so the outer node must not paint
+                    Box(Modifier.systemBars(BarContent.Dark).fillMaxSize())
+                }
+            }
+        }
+        waitFor("inner Dark wins") { !statusDarkIcons() }
+        rule.waitForIdle()
+        assertNear("outer does not paint while shadowed", Color.Black, pixelAt(20, 10))
+    }
+
+    /**
+     * Below API 29 the system fills the navigation bar with `navigationBarColor` (the translucent scrim from
+     * `enableEdgeToEdge()`). Dark content under a light scrim needs dark icons.
+     */
+    @Test
+    fun legacyNavigationScrim_usesWindowNavigationBarColor() {
+        assumeTrue("API 29+ uses the scrim model instead", Build.VERSION.SDK_INT < 29)
+        rule.setContent {
+            TestHost(fast.copy(scrimModel = ScrimModel.AndroidxDefault), navigationBarColor = 0xE6FFFFFF.toInt()) {
+                Box(Modifier.systemBars(BarContent.Dark, BarContent.Auto).fillMaxSize().drawBehind { drawRect(Color.Black) })
+            }
+        }
+        waitFor("light scrim over black → dark nav icons") { navDarkIcons() }
     }
 
     private fun midGrayOnNavigation(config: SystemBarsConfig) {

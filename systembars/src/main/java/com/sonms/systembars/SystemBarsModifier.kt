@@ -9,6 +9,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.drawscope.scale
@@ -50,36 +52,46 @@ import kotlinx.coroutines.launch
  *
  * @param status 상태바 설정 / How the status bar decides its icons
  * @param navigation 내비게이션바 설정 / How the navigation bar decides its icons
+ * @param statusPaint 상태바 영역을 칠할지(기본 [BarPaint.None], 투명) / Whether to paint the status bar area
+ * @param navigationPaint 내비게이션바 영역을 칠할지(기본 [BarPaint.None], 투명) / Whether to paint the navigation bar area
  */
 public fun Modifier.systemBars(
     status: BarContent = BarContent.Auto,
     navigation: BarContent = BarContent.Auto,
-): Modifier = this.then(SystemBarsElement(status, navigation))
+    statusPaint: BarPaint = BarPaint.None,
+    navigationPaint: BarPaint = BarPaint.None,
+): Modifier = this.then(SystemBarsElement(status, navigation, statusPaint, navigationPaint))
 
 private data class SystemBarsElement(
     val status: BarContent,
     val navigation: BarContent,
+    val statusPaint: BarPaint,
+    val navigationPaint: BarPaint,
 ) : ModifierNodeElement<SystemBarsNode>() {
-    override fun create() = SystemBarsNode(status, navigation)
+    override fun create() = SystemBarsNode(status, navigation, statusPaint, navigationPaint)
 
     override fun update(node: SystemBarsNode) {
-        node.updateContent(status, navigation)
+        node.updateContent(status, navigation, statusPaint, navigationPaint)
     }
 
     override fun InspectorInfo.inspectableProperties() {
         name = "systemBars"
         properties["status"] = status
         properties["navigation"] = navigation
+        properties["statusPaint"] = statusPaint
+        properties["navigationPaint"] = navigationPaint
     }
 }
 
 private class SystemBarsNode(
     status: BarContent,
     navigation: BarContent,
+    statusPaint: BarPaint,
+    navigationPaint: BarPaint,
 ) : Modifier.Node(), DrawModifierNode, CompositionLocalConsumerModifierNode, GlobalPositionAwareModifierNode {
 
-    private val statusSlot = BarSlot(status)
-    private val navigationSlot = BarSlot(navigation)
+    private val statusSlot = BarSlot(status, statusPaint)
+    private val navigationSlot = BarSlot(navigation, navigationPaint)
     private var controller: SystemBarsController? = null
     private var disposeHandle: (() -> Unit)? = null
     private var updateHandle: (() -> Unit)? = null
@@ -136,12 +148,17 @@ private class SystemBarsNode(
     }
 
     /** Only the node that currently decides a bar is worth sampling for; shadowed ones skip the work. */
-    private fun wantsStatus(c: SystemBarsController) = statusSlot.content == BarContent.Auto && c.isWinner(statusSlot, top = true)
-    private fun wantsNavigation(c: SystemBarsController) = navigationSlot.content == BarContent.Auto && c.isWinner(navigationSlot, top = false)
+    private fun wantsStatus(c: SystemBarsController) = needsSample(statusSlot) && c.isWinner(statusSlot, top = true)
+    private fun wantsNavigation(c: SystemBarsController) = needsSample(navigationSlot) && c.isWinner(navigationSlot, top = false)
+
+    /** A slot needs pixels when its icons come from sampling, or when it paints the sampled color. */
+    private fun needsSample(slot: BarSlot) = slot.effectiveContent == BarContent.Auto || slot.effectivePaint == BarPaint.Sampled
 
     /** A node that just started winning has a stale (or no) sample: take a fresh one right away. */
     private fun onRegistryChanged() {
         val c = controller ?: return
+        // Winner changed: the new winner has to paint, the old one has to stop.
+        if (paintsAnything()) coroutineScope.launch { invalidateDraw() }
         val now = wantsStatus(c) || wantsNavigation(c)
         if (now && !wasSampling) {
             lastSampleNanos = 0L
@@ -150,11 +167,20 @@ private class SystemBarsNode(
         wasSampling = now
     }
 
-    fun updateContent(status: BarContent, navigation: BarContent) {
-        if (statusSlot.content == status && navigationSlot.content == navigation) return
+    private fun paintsAnything() =
+        statusSlot.effectivePaint != BarPaint.None || navigationSlot.effectivePaint != BarPaint.None
+
+    fun updateContent(status: BarContent, navigation: BarContent, statusPaint: BarPaint, navigationPaint: BarPaint) {
+        if (statusSlot.content == status && navigationSlot.content == navigation &&
+            statusSlot.paint == statusPaint && navigationSlot.paint == navigationPaint
+        ) return
+        val hadPaint = paintsAnything()
         statusSlot.content = status
         navigationSlot.content = navigation
+        statusSlot.paint = statusPaint
+        navigationSlot.paint = navigationPaint
         updateHandle?.invoke()
+        if (hadPaint || paintsAnything()) invalidateDraw()
     }
 
     override fun onGloballyPositioned(coordinates: LayoutCoordinates) {
@@ -178,6 +204,13 @@ private class SystemBarsNode(
     override fun ContentDrawScope.draw() {
         drawContent()
         val c = controller ?: return
+        sampleIfDue(c)
+        // Paint after sampling so a fresh sample is used right away; the sample itself never includes the paint.
+        paintBar(top = true, statusSlot, c)
+        paintBar(top = false, navigationSlot, c)
+    }
+
+    private fun ContentDrawScope.sampleIfDue(c: SystemBarsController) {
         if (statusSlot.content == BarContent.AutoWindow || navigationSlot.content == BarContent.AutoWindow) {
             c.requestWindowSample()
         }
@@ -199,6 +232,19 @@ private class SystemBarsNode(
             Trace.endSection()
         }
         if (changed) coroutineScope.launch { c.apply() }
+    }
+
+    /** Paints the part of the bar that overlaps this node, only while this node decides that bar. */
+    private fun ContentDrawScope.paintBar(top: Boolean, slot: BarSlot, c: SystemBarsController) {
+        val argb = when (val p = slot.effectivePaint) {
+            BarPaint.None -> return
+            BarPaint.Sampled -> slot.sampleArgb ?: return
+            is BarPaint.Solid -> p.color.toArgb()
+        }
+        if (!c.isWinner(slot, top)) return
+        val barHeight = if (top) c.statusBarHeight() else c.navigationBarHeight()
+        val span = localSpanUnderBar(top, barHeight, currentValueOf(LocalView).height.toFloat()) ?: return
+        drawRect(Color(argb), topLeft = Offset(0f, span.first), size = Size(size.width, span.second - span.first))
     }
 
     /** Window-level frame callback: request a re-draw of this node when a sample is due. */
@@ -253,7 +299,7 @@ private class SystemBarsNode(
         drawContext.canvas = canvas
         drawContext.size = Size(NODE_W.toFloat(), NODE_H.toFloat())
         try {
-            drawRect(androidx.compose.ui.graphics.Color.Transparent, size = Size(NODE_W.toFloat(), NODE_H.toFloat()), blendMode = BlendMode.Clear)
+            drawRect(Color.Transparent, size = Size(NODE_W.toFloat(), NODE_H.toFloat()), blendMode = BlendMode.Clear)
             scale(NODE_W / nodeWidth, NODE_H / nodeHeight, pivot = Offset.Zero) { outer.drawContent() }
         } finally {
             drawContext.canvas = savedCanvas
@@ -266,13 +312,18 @@ private class SystemBarsNode(
         return changed
     }
 
-    /** Bitmap rows (inclusive start, exclusive end) covered by the bar, or null if the bar misses this node. */
-    private fun ContentDrawScope.rowsUnderBar(top: Boolean, barHeightPx: Int, windowHeight: Float): IntRange? {
+    /** Local y range (top, bottom) of the bar inside this node, or null if the bar misses the node. */
+    private fun ContentDrawScope.localSpanUnderBar(top: Boolean, barHeightPx: Int, windowHeight: Float): Pair<Float, Float>? {
         if (barHeightPx <= 0) return null
         val barTop = if (top) 0f else windowHeight - barHeightPx
         val localTop = (barTop - windowOffset.y).coerceIn(0f, size.height)
         val localBottom = (barTop + barHeightPx - windowOffset.y).coerceIn(0f, size.height)
-        if (localBottom - localTop <= 0f) return null
+        return if (localBottom - localTop <= 0f) null else localTop to localBottom
+    }
+
+    /** Bitmap rows (inclusive start, exclusive end) covered by the bar, or null if the bar misses this node. */
+    private fun ContentDrawScope.rowsUnderBar(top: Boolean, barHeightPx: Int, windowHeight: Float): IntRange? {
+        val (localTop, localBottom) = localSpanUnderBar(top, barHeightPx, windowHeight) ?: return null
         val r0 = (localTop / size.height * NODE_H).toInt().coerceIn(0, NODE_H - 1)
         val r1 = kotlin.math.ceil(localBottom / size.height * NODE_H).toInt().coerceIn(r0 + 1, NODE_H)
         return r0 until r1

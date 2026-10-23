@@ -22,6 +22,7 @@
 | 시점 | 스로틀(기본 300ms, 약 3Hz. 100ms 는 S8 스크롤에서 p95 프레임이 약 42ms 로 늘어 올림) + 히스테리시스(기본 0.45 / 0.55). 간격·임계값 모두 파라미터 |
 | API | `Modifier.systemBars(status, navigation)` , 각각 `BarContent` = `Auto` \| `AutoWindow` \| `Background(Color)` \| `Light` \| `Dark` \| `Inherit` |
 | 중재 | 루트 `SystemBarsHost` + 스택형 레지스트리. 나중에 등록된 항목이 이기고, 해제되면 이전 항목으로 복귀. `Inherit` 는 아래 항목을 따른다 |
+| 바 칠하기 | `BarPaint` = `None`(기본, 투명) \| `Sampled` \| `Solid(color)`. 윈도우 색 속성 대신 노드가 `drawContent()` 뒤에 바 영역을 칠한다(API 35 에서 `statusBarColor` 무효). 스택에서 이기는 노드만 칠함, 칠한 색이 아이콘 판정 기준. `Sampled` 는 `Auto` 한정(윈도우 샘플에 칠이 섞이는 순환 방지) |
 | 다이얼로그 | `Dialog` 헬퍼 제공 (별도 윈도우). 컴포넌트 래퍼는 범위 밖 |
 | 3버튼 내비 | `tappableElement` 인셋으로 감지. `contrastEnforced=true` 기본. `scrimModel`(기본: androidx 근사값, `null` 이면 비활성) |
 | edge-to-edge | 사용자가 `enableEdgeToEdge()` 호출. 미호출 시 디버그 경고 로그 |
@@ -43,6 +44,7 @@
 - `GraphicsLayer.record { drawContent() }` 는 `drawContent()` 가 레이어로 들어가지 않았고, 레이어를 다른 레이어에 축소해서 그리면 빈 이미지가 나왔다. → `GraphicsLayer` 경로를 버리고 캔버스 교체 방식으로 변경.
 - 중첩된 노드는 **자식이 부모보다 먼저 attach** 된다. 등록 순서만으로는 깊은 쪽이 이길 수 없어서, 첫 레이아웃 뒤 `parentLayoutCoordinates` 로 깊이를 구해 우선순위로 쓴다(깊이 → 등록 순).
 - `PixelCopy` 는 draw 중 요청하면 직전 프레임을 복사한다. 샘플 뒤 50ms+ 후 한 번 더 확인한다. 앱이 `enableEdgeToEdge()` 를 안 하면 시스템이 그린 바 배경이 샘플에 섞인다.
+- API 28 이하 3버튼 내비바는 시스템이 `navigationBarColor` 로 채우므로(`enableEdgeToEdge()` 는 반투명 스크림), 그 색을 스크림으로 사용한다(칠한 색이 스크림에 덮여 아이콘이 안 보이던 문제).
 - 라이브러리의 androidTest APK 는 targetSdk 가 minSdk(24) 로 잡혀 기기가 "이전 버전용 앱" 으로 차단할 수 있어 `testOptions.targetSdk = 36` 으로 올렸다.
 
 ## 3. 리컴포지션 안전
