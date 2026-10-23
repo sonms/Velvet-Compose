@@ -20,12 +20,16 @@
 | 감지 | 직접 지정(색/추출 색) + 자동 픽셀 샘플링 둘 다 |
 | 샘플링 | 기본: `Modifier.Node` 가 콘텐츠를 `GraphicsLayer` 에 기록 → 바 높이 띠만 다운샘플해 휘도 계산. 폴백: `PixelCopy` (API 26 미만 비활성) |
 | 시점 | 스로틀(기본 ~10Hz) + 히스테리시스(기본 0.45 / 0.55). 간격·임계값 모두 파라미터 |
-| API | `Modifier.systemBars(status, navigation)` , 각각 `BarContent` = `Auto` \| `Background(Color)` \| `Light` \| `Dark` \| `Inherit` |
+| API | `Modifier.systemBars(status, navigation)` , 각각 `BarContent` = `Auto` \| `AutoWindow` \| `Background(Color)` \| `Light` \| `Dark` \| `Inherit` |
 | 중재 | 루트 `SystemBarsHost` + 스택형 레지스트리. 나중에 등록된 항목이 이기고, 해제되면 이전 항목으로 복귀. `Inherit` 는 아래 항목을 따른다 |
 | 다이얼로그 | `Dialog` 헬퍼 제공 (별도 윈도우). 컴포넌트 래퍼는 범위 밖 |
 | 3버튼 내비 | `tappableElement` 인셋으로 감지. `contrastEnforced=true` 기본. `scrimModel`(기본: androidx 근사값, `null` 이면 비활성) |
 | edge-to-edge | 사용자가 `enableEdgeToEdge()` 호출. 미호출 시 디버그 경고 로그 |
 | 후속 | Navigation 연동은 `:systembars-navigation` 어댑터 모듈 (어댑터 → 코어 단방향) |
+
+> `Auto` 는 `GraphicsLayer`(Compose 로 그린 것만), `AutoWindow` 는 `PixelCopy`(API 26+, `SurfaceView`/지도/비디오용).
+> Compose 밖에서 그려진 영역은 자동으로 알 수 없어서 폴백은 **명시적 옵트인** 이다. `AutoWindow` 의 샘플에는 시스템 스크림이 이미 포함되므로 스크림 모델은 적용하지 않는다.
+> `Light`/`Dark`/`Background` 는 바 **뒤 배경**의 톤이다 (Light 배경 → 어두운 아이콘).
 
 ### 스크림 순환 의존 해결
 
