@@ -156,13 +156,17 @@ internal class SystemBarsController(
         }
     }
 
-    @Suppress("DEPRECATION") // only reads the color to warn in debug builds
+    /** Debug-only hint. From API 35 edge-to-edge is enforced and `statusBarColor` is meaningless, so skip it. */
     private fun warnIfNotEdgeToEdge() {
+        if (Build.VERSION.SDK_INT >= 35) return
         val debuggable = view.context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
-        if (debuggable && (window.statusBarColor ushr 24) != 0) {
+        if (debuggable && statusBarAlpha() != 0) {
             Log.w(TAG, "Status bar is not transparent — call enableEdgeToEdge() in Activity.onCreate before setContent.")
         }
     }
+
+    @Suppress("DEPRECATION") // the only way to read it below API 35
+    private fun statusBarAlpha(): Int = window.statusBarColor ushr 24
 
     companion object {
         const val SAMPLE_W = 32
