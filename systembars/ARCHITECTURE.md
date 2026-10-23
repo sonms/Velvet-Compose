@@ -19,7 +19,7 @@
 |---|---|
 | 감지 | 직접 지정(색/추출 색) + 자동 픽셀 샘플링 둘 다 |
 | 샘플링 | 기본: `Modifier.Node` 가 평소엔 `drawContent()` 만 하고, 샘플 시점에만 노드 캔버스를 32×8 소프트웨어 `ImageBitmap` 으로 잠깐 바꿔 바 영역을 한 번 더 그린다(동기, GPU read-back 없음). 폴백: `PixelCopy` (API 26 미만 비활성) |
-| 시점 | 스로틀(기본 ~10Hz) + 히스테리시스(기본 0.45 / 0.55). 간격·임계값 모두 파라미터 |
+| 시점 | 스로틀(기본 300ms, 약 3Hz. 100ms 는 S8 스크롤에서 p95 프레임이 약 42ms 로 늘어 올림) + 히스테리시스(기본 0.45 / 0.55). 간격·임계값 모두 파라미터 |
 | API | `Modifier.systemBars(status, navigation)` , 각각 `BarContent` = `Auto` \| `AutoWindow` \| `Background(Color)` \| `Light` \| `Dark` \| `Inherit` |
 | 중재 | 루트 `SystemBarsHost` + 스택형 레지스트리. 나중에 등록된 항목이 이기고, 해제되면 이전 항목으로 복귀. `Inherit` 는 아래 항목을 따른다 |
 | 다이얼로그 | `Dialog` 헬퍼 제공 (별도 윈도우). 컴포넌트 래퍼는 범위 밖 |

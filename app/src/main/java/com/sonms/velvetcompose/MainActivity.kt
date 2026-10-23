@@ -64,7 +64,7 @@ class MainActivity : ComponentActivity() {
                 if (selectedSample == SampleType.SYSTEM_BARS) {
                     // 바 뒤까지 그려야 하므로 Scaffold 의 innerPadding 밖에서 전체 화면으로 띄운다.
                     SystemBarsHost(
-                        config = SystemBarsConfig(intervalMillis = intent.getLongExtra("interval", 100L)),
+                        config = SystemBarsConfig(intervalMillis = intent.getLongExtra("interval", 300L)),
                     ) {
                         SystemBarsShowcase(
                             onBack = { selectedSample = SampleType.VERTICAL_TIME },

@@ -33,7 +33,7 @@ public class ScrimModel(public val lightScrim: Color, public val darkScrim: Colo
  */
 @Immutable
 public data class SystemBarsConfig(
-    val intervalMillis: Long = 100L,
+    val intervalMillis: Long = 300L,
     val lowThreshold: Float = 0.45f,
     val highThreshold: Float = 0.55f,
     val contrastEnforced: Boolean = true,
