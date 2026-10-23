@@ -60,6 +60,8 @@ dependencies {
 dokka {
     dokkaSourceSets.main {
         enableAndroidDocumentationLink.set(false)
+        reportUndocumented.set(true)
+        includes.from("Module.md")
     }
 }
 

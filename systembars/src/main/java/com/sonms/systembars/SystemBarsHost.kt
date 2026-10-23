@@ -17,8 +17,16 @@ import com.sonms.systembars.internal.SystemBarsController
 internal val LocalSystemBarsController = compositionLocalOf<SystemBarsController?> { null }
 
 /**
- * Root of the system-bars registry for one window. Place it once under `setContent`
- * (after calling `enableEdgeToEdge()` in the Activity). Screens then use [Modifier.systemBars].
+ * 한 윈도우의 시스템 바 레지스트리 루트입니다. `setContent` 바로 아래에 한 번만 두세요.
+ * Activity 에서 `enableEdgeToEdge()` 를 먼저 호출해야 하며(이 라이브러리는 호출하지 않습니다),
+ * 이후 화면에서 [systemBars] 를 사용합니다. Dialog 는 별도 윈도우이므로 [SystemBarsDialog] 를 쓰세요.
+ *
+ * Root of the system-bars registry for one window. Place it once under `setContent`, after calling
+ * `enableEdgeToEdge()` in the Activity (the library does not do that for you). Screens then use
+ * [systemBars]. Dialogs are separate windows, use [SystemBarsDialog].
+ *
+ * @param config 간격 / 임계값 / 스크림 설정 / Interval, thresholds and scrim settings
+ * @param content 레지스트리를 사용할 콘텐츠 / Content that can use the registry
  */
 @Composable
 public fun SystemBarsHost(

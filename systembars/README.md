@@ -121,6 +121,14 @@ SystemBarsHost(
 - `PixelCopy` 를 `Auto` 의 기본으로 쓰는 안은 S8 에서 측정했지만 canvas 방식보다 나아지지 않아 채택하지 않았다.
 - 스크림 모델은 근사값이다. 기기마다 다를 수 있다.
 
+## API 문서 (Dokka)
+
+```
+./gradlew :systembars:dokkaGenerate   # build/dokka/html/index.html
+```
+
+공개 API 의 KDoc 은 저장소 관례대로 한국어 / 영어를 함께 적는다. 미문서화 항목은 Dokka 경고로 나온다.
+
 ## 테스트
 
 ```

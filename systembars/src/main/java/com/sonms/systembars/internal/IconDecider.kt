@@ -11,7 +11,7 @@ internal class Scrim(val light: Int, val dark: Int)
  * Without a scrim, a luminance hysteresis band avoids flicker near the midpoint.
  * With a scrim, the system picks the scrim from our choice, so both candidates are
  * composited and the one with the better icon contrast wins; it only switches away from
- * [previousDarkIcons] when it improves contrast by [SWITCH_MARGIN].
+ * `previousDarkIcons` when it improves contrast by [SWITCH_MARGIN].
  */
 internal class IconDecider(
     private val lowThreshold: Float,

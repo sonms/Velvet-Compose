@@ -30,14 +30,26 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
+ * 이 콘텐츠가 화면에 있는 동안 시스템 바가 어떻게 보일지 선언합니다.
+ * 위쪽에 [SystemBarsHost] 가 있어야 하며, 없으면 아무 일도 하지 않습니다(디버그 로그만 남깁니다).
+ *
+ * 여러 곳에서 쓰면 **더 깊은 노드가 이기고, 깊이가 같으면 나중에 붙은 쪽이 이깁니다.**
+ * 노드가 사라지면 이전 항목으로 복귀하고, [BarContent.Inherit] 는 아래 항목을 따릅니다.
+ *
+ * **[BarContent.Auto] 는 순서가 중요합니다.** modifier 안쪽에 그려진 것만 샘플링하므로
+ * 배경을 그리는 modifier 보다 앞에 두세요: `Modifier.systemBars().fillMaxSize().background(color)`.
+ *
  * Declares how the system bars should look while this content is on screen. Requires a
- * [SystemBarsHost] above it; without one the modifier is inert.
+ * [SystemBarsHost] above it; without one the modifier is inert (a debug log is printed).
  *
  * Deeper usages win over shallower ones, and among equal depth the most recently attached wins;
  * [BarContent.Inherit] falls through to the entry below.
  *
  * **Order matters for [BarContent.Auto]:** the modifier samples what is drawn *inside* it, so put it
- * before the modifiers that draw the background: `Modifier.systemBars().fillMaxSize().background(c)`.
+ * before the modifiers that draw the background: `Modifier.systemBars().fillMaxSize().background(color)`.
+ *
+ * @param status 상태바 설정 / How the status bar decides its icons
+ * @param navigation 내비게이션바 설정 / How the navigation bar decides its icons
  */
 public fun Modifier.systemBars(
     status: BarContent = BarContent.Auto,
