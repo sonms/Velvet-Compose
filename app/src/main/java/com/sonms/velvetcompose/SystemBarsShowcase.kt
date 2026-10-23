@@ -65,7 +65,7 @@ private val bandColors = listOf(
 )
 
 @Composable
-fun SystemBarsShowcase(onBack: () -> Unit, initialDemo: String? = null) {
+fun SystemBarsShowcase(onBack: () -> Unit, initialDemo: String? = null, initialPaint: String? = null) {
     var demo by remember { mutableStateOf(BarsDemo.entries.firstOrNull { it.name == initialDemo } ?: BarsDemo.SCROLL) }
 
     Box(Modifier.fillMaxSize()) {
@@ -76,7 +76,7 @@ fun SystemBarsShowcase(onBack: () -> Unit, initialDemo: String? = null) {
             BarsDemo.DIALOG -> DialogDemo()
             BarsDemo.SURFACE -> SurfaceDemo()
             BarsDemo.STACKED -> StackedDemo()
-            BarsDemo.PAINT -> PaintDemo()
+            BarsDemo.PAINT -> PaintDemo(initialPaint)
         }
 
         // 컨트롤은 바 영역을 피해 안쪽에 둔다 (statusBarsPadding / navigationBarsPadding).
@@ -121,8 +121,10 @@ private fun ScrollDemo(sampled: Boolean, paint: BarPaint = BarPaint.None) {
 
 /** 바 영역 칠하기: 투명(기본) / 샘플 색 단색 / 지정 색 단색. 스크롤하면서 상태바·내비바 띠를 본다. */
 @Composable
-private fun PaintDemo() {
-    var mode by remember { mutableStateOf("투명") }
+private fun PaintDemo(initialMode: String? = null) {
+    var mode by remember {
+        mutableStateOf(when (initialMode) { "sampled" -> "샘플"; "solid" -> "단색"; else -> "투명" })
+    }
     val solid by androidx.compose.animation.animateColorAsState(Color(0xFF3F51B5), label = "barSolid")
     val paint = when (mode) {
         "샘플" -> BarPaint.Sampled

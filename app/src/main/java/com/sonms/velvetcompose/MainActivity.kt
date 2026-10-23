@@ -74,6 +74,7 @@ class MainActivity : ComponentActivity() {
                         SystemBarsShowcase(
                             onBack = { selectedSample = SampleType.VERTICAL_TIME },
                             initialDemo = intent.getStringExtra("bars_demo"),
+                            initialPaint = intent.getStringExtra("paint"),
                         )
                     }
                     return@VelvetComposeTheme
