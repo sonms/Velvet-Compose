@@ -156,6 +156,7 @@ internal class SystemBarsController(
         }
     }
 
+    @Suppress("DEPRECATION") // only reads the color to warn in debug builds
     private fun warnIfNotEdgeToEdge() {
         val debuggable = view.context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
         if (debuggable && (window.statusBarColor ushr 24) != 0) {

@@ -60,11 +60,24 @@ internal/ (순수 Kotlin, JVM 단위 테스트)
   BarRegistry     스택형 레지스트리 + Inherit 해석
 public
   BarContent, ScrimModel
-  Modifier.systemBars, SystemBarsHost, Dialog 헬퍼   (이후 단계)
+  Modifier.systemBars, SystemBarsHost, SystemBarsDialog, SystemBarsConfig(+ScrimModel)
 ```
 
 ## 5. 테스트
 
 1. JVM 단위: 휘도, 히스테리시스, 스크림 대비, 레지스트리
-2. 계측(Compose): `GraphicsLayer` 샘플링, 가짜 인셋 주입, 컴포지션 횟수
+2. 계측(Compose, 실기기): 캔버스 교체 샘플링, 바 높이 주입, 레지스트리 스택, 컴포지션 횟수, `PixelCopy`, 3버튼 스크림(API 29+, 아니면 스킵)
 3. `:app` 데모 탭: 스크롤/그라데이션/이미지/다이얼로그/`SurfaceView`(PixelCopy)
+
+## 6. 성능 (S8 API 28, 스크롤 시나리오, 4라운드 중앙값)
+
+| | modifier 없음 | 간격 300ms | 간격 100ms |
+|---|---|---|---|
+| debug p95 / p99 | 약 19 / 26ms | 약 25 / 50ms | 약 42 / 63ms |
+| release p95 / p99 | 약 13 / 17.5ms | 약 20 / 31ms | 약 21 / 29ms |
+
+- 샘플 1회는 약 4ms(debug) 지만, `invalidateDraw` 로 서브트리를 다시 기록하는 비용이 더 커서 스크롤 중 프레임 꼬리가 늘어난다. 그래서 기본 간격을 300ms 로 올렸다.
+- jank 비율은 같은 설정에서도 1%~49% 로 흔들려 지표로 쓰지 않았다.
+- **채택하지 않은 안**: `Auto` 를 `PixelCopy`(API 26+) 로 바꾸는 안은 canvas 방식과 jank 가 같거나 조금 높았다(GPU read-back 이 재그리기보다 싸지 않음). 네이티브(C/NDK) 대체도 검토했으나 병목이 픽셀 연산이 아니라 draw 재기록/GPU 읽기라 이득이 없다.
+- 메모리: LeakCanary 로 Activity 30회 파괴(스크롤/Dialog/SurfaceView/지정색 데모) 시 retained 객체 없음.
+- 미확인: Layout Inspector 리컴포지션 카운트(수동), 실제 삼성 기기의 3버튼 스크림 색.
