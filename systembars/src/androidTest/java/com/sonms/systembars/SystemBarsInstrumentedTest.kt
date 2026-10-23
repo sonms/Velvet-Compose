@@ -191,6 +191,22 @@ class SystemBarsInstrumentedTest {
         waitFor("black window → light icons") { !statusDarkIcons() }
     }
 
+    /** Regression: a new [SystemBarsConfig] used to replace the controller and orphan attached nodes. */
+    @Test
+    fun host_configChange_keepsAttachedNodesWorking() {
+        var config by mutableStateOf(SystemBarsConfig(intervalMillis = 300L))
+        var content by mutableStateOf<BarContent>(BarContent.Light)
+        rule.setContent {
+            view = LocalView.current
+            SystemBarsHost(config) { Box(Modifier.fillMaxSize().systemBars(content, content)) }
+        }
+        waitFor("Light → dark icons") { statusDarkIcons() }
+        config = SystemBarsConfig(intervalMillis = 50L)
+        rule.waitForIdle()
+        content = BarContent.Dark
+        waitFor("still reacts after config change") { !statusDarkIcons() }
+    }
+
     private fun midGrayOnNavigation(config: SystemBarsConfig) {
         assumeTrue("scrim applies on API 29+", Build.VERSION.SDK_INT >= 29)
         rule.setContent {

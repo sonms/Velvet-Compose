@@ -26,12 +26,15 @@ internal class BarSlot(var content: BarContent, var sampleArgb: Int? = null)
 internal class SystemBarsController(
     private val window: Window,
     private val view: View,
-    val config: SystemBarsConfig,
+    config: SystemBarsConfig,
     /** Test seam: overrides the inset-derived bar heights (`top == true` → status bar). */
     private val barHeightOverride: ((top: Boolean) -> Int)? = null,
 ) {
     private val registry = BarRegistry<BarSlot> { it.content == BarContent.Inherit }
-    private val decider = IconDecider(config.lowThreshold, config.highThreshold)
+    /** Replaced in place by [updateConfig] so nodes attached to this controller keep working. */
+    var config: SystemBarsConfig = config
+        private set
+    private var decider = IconDecider(config.lowThreshold, config.highThreshold)
     private var statusDarkIcons: Boolean? = null
     private var navDarkIcons: Boolean? = null
     private var lastWindowSample = 0L
@@ -44,6 +47,15 @@ internal class SystemBarsController(
         registry.onChanged = ::apply
         if (Build.VERSION.SDK_INT >= 29) window.isNavigationBarContrastEnforced = config.contrastEnforced
         warnIfNotEdgeToEdge()
+    }
+
+    /** Applies new tuning without recreating the controller (nodes hold on to it from `onAttach`). */
+    fun updateConfig(new: SystemBarsConfig) {
+        if (new == config) return
+        config = new
+        decider = IconDecider(new.lowThreshold, new.highThreshold)
+        if (Build.VERSION.SDK_INT >= 29) window.isNavigationBarContrastEnforced = new.contrastEnforced
+        apply()
     }
 
     fun register(status: BarSlot, navigation: BarSlot, priority: Int = 0) =

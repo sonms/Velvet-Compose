@@ -8,6 +8,7 @@ import android.view.Window
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalView
@@ -39,7 +40,10 @@ public fun SystemBarsHost(
         content()
         return
     }
-    val controller = remember(window, view, config) { SystemBarsController(window, view, config) }
+    // Keyed on window/view only: nodes keep the controller they attached to, so a config change must
+    // update it in place instead of replacing it.
+    val controller = remember(window, view) { SystemBarsController(window, view, config) }
+    SideEffect { controller.updateConfig(config) }
     DisposableEffect(controller) { onDispose { controller.dispose() } }
     CompositionLocalProvider(LocalSystemBarsController provides controller, content = content)
 }
