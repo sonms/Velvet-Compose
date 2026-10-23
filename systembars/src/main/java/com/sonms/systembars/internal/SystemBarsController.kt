@@ -35,6 +35,8 @@ internal class SystemBarsController(
     private var navDarkIcons: Boolean? = null
     private var lastWindowSample = 0L
     private var windowSampling = false
+    private var settleScheduled = false
+    private val mainHandler = Handler(Looper.getMainLooper())
     private var disposed = false
 
     init {
@@ -43,7 +45,8 @@ internal class SystemBarsController(
         warnIfNotEdgeToEdge()
     }
 
-    fun register(status: BarSlot, navigation: BarSlot) = registry.register(status, navigation)
+    fun register(status: BarSlot, navigation: BarSlot, priority: Int = 0) =
+        registry.register(status, navigation, priority)
 
     fun dispose() {
         disposed = true
@@ -97,13 +100,13 @@ internal class SystemBarsController(
     }
 
     /** PixelCopy fallback; throttled by [SystemBarsConfig.intervalMillis]. No-op below API 26. */
-    fun requestWindowSample() {
+    fun requestWindowSample(settle: Boolean = false) {
         if (Build.VERSION.SDK_INT < 26 || disposed || windowSampling) return
         val wantsStatus = registry.resolveStatus()?.content == BarContent.AutoWindow
         val wantsNav = registry.resolveNavigation()?.content == BarContent.AutoWindow
         if (!wantsStatus && !wantsNav) return
         val now = SystemClock.uptimeMillis()
-        if (now - lastWindowSample < config.intervalMillis) return
+        if (!settle && now - lastWindowSample < config.intervalMillis) return
         lastWindowSample = now
 
         val width = view.width
@@ -115,13 +118,22 @@ internal class SystemBarsController(
         }.filter { !it.second.isEmpty }
         if (jobs.isEmpty()) return
         windowSampling = true
-        copyNext(jobs, 0)
+        copyNext(jobs, 0, settle)
     }
 
-    private fun copyNext(jobs: List<Pair<BarSlot, Rect>>, index: Int) {
+    private fun copyNext(jobs: List<Pair<BarSlot, Rect>>, index: Int, settle: Boolean) {
         if (index >= jobs.size) {
             windowSampling = false
             apply()
+            // The request is made while drawing, so PixelCopy sees the previous frame. Look once more
+            // after things settle so a static screen ends up with its final color.
+            if (!settle && !settleScheduled) {
+                settleScheduled = true
+                mainHandler.postDelayed({
+                    settleScheduled = false
+                    requestWindowSample(settle = true)
+                }, maxOf(config.intervalMillis, SETTLE_DELAY_MS))
+            }
             return
         }
         val (slot, rect) = jobs[index]
@@ -130,8 +142,8 @@ internal class SystemBarsController(
             PixelCopy.request(window, rect, bitmap, { result ->
                 if (result == PixelCopy.SUCCESS) slot.sampleArgb = averageArgb(bitmap)
                 bitmap.recycle()
-                copyNext(jobs, index + 1)
-            }, Handler(Looper.getMainLooper()))
+                copyNext(jobs, index + 1, settle)
+            }, mainHandler)
         } catch (e: IllegalArgumentException) {
             bitmap.recycle()
             windowSampling = false
@@ -148,6 +160,7 @@ internal class SystemBarsController(
     companion object {
         const val SAMPLE_W = 32
         const val SAMPLE_H = 8
+        private const val SETTLE_DELAY_MS = 50L
         private const val TAG = "SystemBars"
     }
 }

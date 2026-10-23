@@ -48,6 +48,12 @@ class SystemBarsInstrumentedTest {
         val v = LocalView.current
         view = v
         val controller = remember(v) {
+            // Draw behind the bars like an edge-to-edge app, so the bar strips overlap the content.
+            v.activity().window.apply {
+                WindowCompat.setDecorFitsSystemWindows(this, false)
+                statusBarColor = android.graphics.Color.TRANSPARENT
+                navigationBarColor = android.graphics.Color.TRANSPARENT
+            }
             SystemBarsController(v.activity().window, v, fast) { 40 }
         }
         CompositionLocalProvider(LocalSystemBarsController provides controller, content = content)
@@ -80,9 +86,9 @@ class SystemBarsInstrumentedTest {
             TestHost {
                 Box(
                     Modifier
+                        .systemBars(BarContent.Auto, BarContent.Auto)
                         .fillMaxSize()
-                        .drawBehind { drawRect(color) }
-                        .systemBars(BarContent.Auto, BarContent.Auto),
+                        .drawBehind { drawRect(color) },
                 )
             }
         }
@@ -98,7 +104,7 @@ class SystemBarsInstrumentedTest {
     fun auto_samplesStatusAndNavigationSeparately() {
         rule.setContent {
             TestHost {
-                Column(Modifier.fillMaxSize().systemBars(BarContent.Auto, BarContent.Auto)) {
+                Column(Modifier.systemBars(BarContent.Auto, BarContent.Auto).fillMaxSize()) {
                     Box(Modifier.fillMaxWidth().weight(1f).background(Color.Black))
                     Box(Modifier.fillMaxWidth().weight(1f).background(Color.White))
                 }
@@ -150,9 +156,9 @@ class SystemBarsInstrumentedTest {
                 SideEffect { compositions++ }
                 Box(
                     Modifier
+                        .systemBars(BarContent.Auto, BarContent.Auto)
                         .fillMaxSize()
-                        .drawBehind { drawRect(color) } // state read in draw phase only
-                        .systemBars(BarContent.Auto, BarContent.Auto),
+                        .drawBehind { drawRect(color) }, // state read in draw phase only
                 )
             }
         }
@@ -174,9 +180,9 @@ class SystemBarsInstrumentedTest {
             TestHost {
                 Box(
                     Modifier
+                        .systemBars(BarContent.AutoWindow, BarContent.AutoWindow)
                         .fillMaxSize()
-                        .drawBehind { drawRect(color) }
-                        .systemBars(BarContent.AutoWindow, BarContent.AutoWindow),
+                        .drawBehind { drawRect(color) },
                 )
             }
         }

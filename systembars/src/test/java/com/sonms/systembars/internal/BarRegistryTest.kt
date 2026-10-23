@@ -61,6 +61,16 @@ class BarRegistryTest {
     }
 
     @Test
+    fun higherPriority_winsRegardlessOfRegistrationOrder() {
+        val r = BarRegistry<Spec>(isInherit = { it == Spec.Inherit })
+        r.register(status = dark, navigation = dark, priority = 3) // deep child registers first
+        r.register(status = light, navigation = light, priority = 1) // shallow parent registers later
+        assertEquals(dark, r.resolveStatus())
+        r.register(status = auto, navigation = auto, priority = 3) // same depth: newer wins
+        assertEquals(auto, r.resolveStatus())
+    }
+
+    @Test
     fun disposeTwice_isNoOp() {
         val r = BarRegistry<Spec>(isInherit = { it == Spec.Inherit })
         var count = 0

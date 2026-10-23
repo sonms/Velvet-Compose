@@ -1,13 +1,14 @@
 package com.sonms.systembars.internal
 
 /**
- * Stack of per-screen bar specs. The most recently registered entry wins; [isInherit]
+ * Stack of per-screen bar specs. Entries are ordered by `priority` (e.g. layout depth), then by
+ * registration order; the last one wins; [isInherit]
  * specs fall through to the entry below, independently for status and navigation bars.
  * Not thread-safe: use from the main thread. Deliberately not Compose state, so changes
  * never trigger recomposition.
  */
 internal class BarRegistry<T : Any>(private val isInherit: (T) -> Boolean) {
-    internal class Entry<T>(var status: T, var navigation: T)
+    internal class Entry<T>(var status: T, var navigation: T, var priority: Int)
 
     private val entries = mutableListOf<Entry<T>>()
 
@@ -21,14 +22,24 @@ internal class BarRegistry<T : Any>(private val isInherit: (T) -> Boolean) {
             onChanged?.invoke()
         }
 
+        /** Re-sorts this entry (e.g. once its layout depth is known). */
+        fun setPriority(priority: Int) {
+            if (entry.priority == priority || entry !in entries) return
+            entries.remove(entry)
+            entry.priority = priority
+            entries.add(entries.indexOfLast { it.priority <= priority } + 1, entry)
+            onChanged?.invoke()
+        }
+
         fun dispose() {
             if (entries.remove(entry)) onChanged?.invoke()
         }
     }
 
-    fun register(status: T, navigation: T): Handle {
-        val entry = Entry(status, navigation)
-        entries += entry
+    fun register(status: T, navigation: T, priority: Int = 0): Handle {
+        val entry = Entry(status, navigation, priority)
+        val at = entries.indexOfLast { it.priority <= priority } + 1
+        entries.add(at, entry)
         onChanged?.invoke()
         return Handle(entry)
     }

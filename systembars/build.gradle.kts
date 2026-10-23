@@ -33,6 +33,10 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
+    testOptions {
+        // 라이브러리의 androidTest APK 는 targetSdk 가 minSdk(24) 로 잡혀 기기에서 "이전 버전용 앱" 으로 차단된다.
+        targetSdk = 36
+    }
 }
 
 composeCompiler {

@@ -91,7 +91,7 @@ fun SystemBarsShowcase(onBack: () -> Unit) {
 /** 흰/검정/파랑/노랑/그라데이션 띠를 스크롤하면서 `Auto` 가 아이콘을 뒤집는지 본다. */
 @Composable
 private fun ScrollDemo() {
-    LazyColumn(Modifier.fillMaxSize().systemBars(BarContent.Auto, BarContent.Auto)) {
+    LazyColumn(Modifier.systemBars(BarContent.Auto, BarContent.Auto).fillMaxSize()) {
         itemsIndexed(List(30) { it }) { i, _ ->
             val c = bandColors[i % bandColors.size]
             Box(
@@ -113,9 +113,9 @@ private fun DeclaredDemo() {
     var color by remember { mutableStateOf(Color(0xFF1E88E5)) }
     Box(
         Modifier
+            .systemBars(BarContent.Background(color), BarContent.Background(color))
             .fillMaxSize()
-            .background(color)
-            .systemBars(BarContent.Background(color), BarContent.Background(color)),
+            .background(color),
         contentAlignment = Alignment.Center,
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -137,7 +137,8 @@ private fun DeclaredDemo() {
 private fun DialogDemo() {
     var show by remember { mutableStateOf(false) }
     Box(
-        Modifier.fillMaxSize().background(Color.White).systemBars(BarContent.Auto, BarContent.Auto),
+        // systemBars 를 background 보다 앞에 둬야 Auto 가 배경까지 샘플링한다.
+        Modifier.systemBars(BarContent.Auto, BarContent.Auto).fillMaxSize().background(Color.White),
         contentAlignment = Alignment.Center,
     ) {
         Button(onClick = { show = true }) { Text("다이얼로그 열기") }
@@ -149,9 +150,9 @@ private fun DialogDemo() {
         ) {
             Box(
                 Modifier
+                    .systemBars(BarContent.Dark, BarContent.Dark)
                     .fillMaxSize()
                     .background(Color(0xFF101010))
-                    .systemBars(BarContent.Dark, BarContent.Dark)
                     .clickable { show = false },
                 contentAlignment = Alignment.Center,
             ) { Text("어두운 다이얼로그 (탭하면 닫힘)", color = Color.White) }
@@ -166,8 +167,8 @@ private fun SurfaceDemo() {
     val argb = (if (dark) Color.Black else Color.White).toArgb()
     Box(
         Modifier
-            .fillMaxSize()
             .systemBars(BarContent.AutoWindow, BarContent.AutoWindow)
+            .fillMaxSize()
             .clickable { dark = !dark },
     ) {
         AndroidView(
