@@ -3,6 +3,8 @@ package com.sonms.velvetcompose
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import android.graphics.Color as AndroidColor
+import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -50,7 +52,10 @@ enum class SampleType {
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        // 기본 enableEdgeToEdge() 는 API 29 미만(및 3버튼)에서 내비바에 반투명 스크림을 깐다. 데모는 바 칠하기가 보이도록 투명으로 둔다.
+        enableEdgeToEdge(
+            navigationBarStyle = SystemBarStyle.auto(AndroidColor.TRANSPARENT, AndroidColor.TRANSPARENT),
+        )
         setContent {
             // adb 로 바로 진입: --es sample SYSTEM_BARS --es bars_demo SCROLL|BASELINE|...
             var selectedSample by remember {

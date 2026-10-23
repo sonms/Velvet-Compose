@@ -37,6 +37,12 @@ override fun onCreate(savedInstanceState: Bundle?) {
 }
 ```
 
+> **내비바에 회색/흰색 막이 덮여 있다면 `enableEdgeToEdge()` 의 기본 스크림이다.** 기본 호출은 API 29 미만(그리고 3버튼 +
+> 대비 강제)에서 내비바에 반투명 스크림(밝은 모드 `0xE6FFFFFF`, 어두운 모드 `0x801B1B1B`)을 깐다. 콘텐츠나 `BarPaint` 를 그대로
+> 보이게 하려면 투명으로 지정한다:
+> `enableEdgeToEdge(navigationBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT))`,
+> API 29+ 에서는 `SystemBarsConfig(contrastEnforced = false)` 도 필요하다. 스크림을 그대로 둘 때는 라이브러리가 그 색을 반영해 아이콘을 고른다.
+
 > **modifier 순서가 중요하다.** `Auto` 는 modifier **안쪽**에 그려진 것만 읽는다.
 > `systemBars()` 를 `background()` 보다 **앞에** 둘 것. 뒤에 두면 배경이 노드 밖이라 샘플이 비어 있다.
 
