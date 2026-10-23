@@ -85,6 +85,8 @@ private class SystemBarsNode(
     private var updateHandle: (() -> Unit)? = null
     private var setPriority: ((Int) -> Unit)? = null
     private var depthKnown = false
+    private var removeChangeListener: (() -> Unit)? = null
+    private var wasSampling = false
 
     private var sampleBitmap: ImageBitmap? = null
     private var sampleCanvas: Canvas? = null
@@ -111,6 +113,7 @@ private class SystemBarsNode(
         setPriority = h::setPriority
         depthKnown = false
         updateHandle = { h.update(statusSlot, navigationSlot) }
+        removeChangeListener = c.addChangeListener(::onRegistryChanged)
         // A parent's draw block does not re-run when only its children redraw (e.g. scrolling), so
         // watch frames at the window level and ask for a re-draw of this node when a sample is due.
         val view = currentValueOf(LocalView)
@@ -119,6 +122,8 @@ private class SystemBarsNode(
     }
 
     override fun onDetach() {
+        removeChangeListener?.invoke()
+        removeChangeListener = null
         disposeHandle?.invoke()
         drawObserverView?.let { v -> if (v.viewTreeObserver.isAlive) v.viewTreeObserver.removeOnDrawListener(onFrame) }
         drawObserverView = null
@@ -128,6 +133,21 @@ private class SystemBarsNode(
         controller = null
         sampleBitmap = null
         sampleCanvas = null
+    }
+
+    /** Only the node that currently decides a bar is worth sampling for; shadowed ones skip the work. */
+    private fun wantsStatus(c: SystemBarsController) = statusSlot.content == BarContent.Auto && c.isWinner(statusSlot, top = true)
+    private fun wantsNavigation(c: SystemBarsController) = navigationSlot.content == BarContent.Auto && c.isWinner(navigationSlot, top = false)
+
+    /** A node that just started winning has a stale (or no) sample: take a fresh one right away. */
+    private fun onRegistryChanged() {
+        val c = controller ?: return
+        val now = wantsStatus(c) || wantsNavigation(c)
+        if (now && !wasSampling) {
+            lastSampleNanos = 0L
+            requestOwnRedraw()
+        }
+        wasSampling = now
     }
 
     fun updateContent(status: BarContent, navigation: BarContent) {
@@ -161,7 +181,7 @@ private class SystemBarsNode(
         if (statusSlot.content == BarContent.AutoWindow || navigationSlot.content == BarContent.AutoWindow) {
             c.requestWindowSample()
         }
-        if (statusSlot.content != BarContent.Auto && navigationSlot.content != BarContent.Auto) return
+        if (!wantsStatus(c) && !wantsNavigation(c)) return
 
         val wait = c.config.intervalMillis * 1_000_000L - (System.nanoTime() - lastSampleNanos)
         if (wait > 0) {
@@ -186,7 +206,7 @@ private class SystemBarsNode(
         // The frame produced by our own re-draw request must not trigger another one (endless loop).
         if (ownRedraws > 0) { ownRedraws--; return }
         val c = controller ?: return
-        if (statusSlot.content != BarContent.Auto && navigationSlot.content != BarContent.Auto) return
+        if (!wantsStatus(c) && !wantsNavigation(c)) return
         val wait = c.config.intervalMillis * 1_000_000L - (System.nanoTime() - lastSampleNanos)
         if (wait > 0) scheduleTrailing(wait) else requestOwnRedraw()
     }
@@ -215,8 +235,8 @@ private class SystemBarsNode(
      * commands, not by pixel count).
      */
     private fun ContentDrawScope.sampleBars(c: SystemBarsController): Boolean {
-        val wantStatus = statusSlot.content == BarContent.Auto
-        val wantNav = navigationSlot.content == BarContent.Auto
+        val wantStatus = wantsStatus(c)
+        val wantNav = wantsNavigation(c)
         if (size.width <= 0f || size.height <= 0f) return false
         val windowHeight = currentValueOf(LocalView).height.toFloat()
         val statusRows = if (wantStatus) rowsUnderBar(top = true, c.statusBarHeight(), windowHeight) else null

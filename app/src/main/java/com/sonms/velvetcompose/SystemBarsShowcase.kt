@@ -55,6 +55,7 @@ private enum class BarsDemo(val label: String) {
     DECLARED("지정/추출 색"),
     DIALOG("Dialog"),
     SURFACE("PixelCopy"),
+    STACKED("겹침(가려진 노드)"),
 }
 
 private val bandColors = listOf(
@@ -72,6 +73,7 @@ fun SystemBarsShowcase(onBack: () -> Unit, initialDemo: String? = null) {
             BarsDemo.DECLARED -> DeclaredDemo()
             BarsDemo.DIALOG -> DialogDemo()
             BarsDemo.SURFACE -> SurfaceDemo()
+            BarsDemo.STACKED -> StackedDemo()
         }
 
         // 컨트롤은 바 영역을 피해 안쪽에 둔다 (statusBarsPadding / navigationBarsPadding).
@@ -109,6 +111,14 @@ private fun ScrollDemo(sampled: Boolean) {
                 Text("#$i", color = if (c.luminanceIsLow()) Color.White else Color.Black)
             }
         }
+    }
+}
+
+/** 바깥 노드가 가려지는 구조: 안쪽 `ScrollDemo` 가 이기므로 바깥 `Auto` 는 샘플링할 필요가 없다. */
+@Composable
+private fun StackedDemo() {
+    Box(Modifier.systemBars(BarContent.Auto, BarContent.Auto).fillMaxSize()) {
+        ScrollDemo(sampled = true)
     }
 }
 

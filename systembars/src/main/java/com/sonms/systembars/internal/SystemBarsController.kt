@@ -42,9 +42,10 @@ internal class SystemBarsController(
     private var settleScheduled = false
     private val mainHandler = Handler(Looper.getMainLooper())
     private var disposed = false
+    private val changeListeners = mutableListOf<() -> Unit>()
 
     init {
-        registry.onChanged = ::apply
+        registry.onChanged = { apply(); changeListeners.toList().forEach { it() } }
         if (Build.VERSION.SDK_INT >= 29) window.isNavigationBarContrastEnforced = config.contrastEnforced
         warnIfNotEdgeToEdge()
     }
@@ -61,8 +62,19 @@ internal class SystemBarsController(
     fun register(status: BarSlot, navigation: BarSlot, priority: Int = 0) =
         registry.register(status, navigation, priority)
 
+    /** Called after every registry change (register / update / re-prioritise / dispose). Main thread. */
+    fun addChangeListener(listener: () -> Unit): () -> Unit {
+        changeListeners += listener
+        return { changeListeners -= listener }
+    }
+
+    /** Whether [slot] currently decides the status bar (`top`) or navigation bar. Shadowed slots need no sampling. */
+    fun isWinner(slot: BarSlot, top: Boolean): Boolean =
+        (if (top) registry.resolveStatus() else registry.resolveNavigation()) === slot
+
     fun dispose() {
         disposed = true
+        changeListeners.clear()
         registry.onChanged = null
     }
 

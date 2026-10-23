@@ -207,6 +207,24 @@ class SystemBarsInstrumentedTest {
         waitFor("still reacts after config change") { !statusDarkIcons() }
     }
 
+    /** A shadowed Auto node skips sampling; when the winner leaves it must take over with a fresh sample. */
+    @Test
+    fun shadowedAutoNode_takesOverWithFreshSample_whenWinnerLeaves() {
+        var inner by mutableStateOf(true)
+        rule.setContent {
+            TestHost {
+                Box(Modifier.systemBars(BarContent.Auto, BarContent.Auto).fillMaxSize().drawBehind { drawRect(Color.Black) }) {
+                    if (inner) {
+                        Box(Modifier.systemBars(BarContent.Auto, BarContent.Auto).fillMaxSize().drawBehind { drawRect(Color.White) })
+                    }
+                }
+            }
+        }
+        waitFor("inner (white) wins → dark icons") { statusDarkIcons() }
+        inner = false
+        waitFor("outer (black) takes over → light icons") { !statusDarkIcons() }
+    }
+
     private fun midGrayOnNavigation(config: SystemBarsConfig) {
         assumeTrue("scrim applies on API 29+", Build.VERSION.SDK_INT >= 29)
         rule.setContent {
