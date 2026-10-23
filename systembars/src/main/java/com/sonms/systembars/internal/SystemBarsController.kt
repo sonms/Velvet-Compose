@@ -26,6 +26,8 @@ internal class SystemBarsController(
     private val window: Window,
     private val view: View,
     val config: SystemBarsConfig,
+    /** Test seam: overrides the inset-derived bar heights (`top == true` → status bar). */
+    private val barHeightOverride: ((top: Boolean) -> Int)? = null,
 ) {
     private val registry = BarRegistry<BarSlot> { it.content == BarContent.Inherit }
     private val decider = IconDecider(config.lowThreshold, config.highThreshold)
@@ -50,10 +52,10 @@ internal class SystemBarsController(
 
     /** Bar heights in px from the current root insets (status top, navigation bottom). */
     fun statusBarHeight(): Int =
-        ViewCompat.getRootWindowInsets(view)?.getInsets(WindowInsetsCompat.Type.statusBars())?.top ?: 0
+        barHeightOverride?.invoke(true) ?: ViewCompat.getRootWindowInsets(view)?.getInsets(WindowInsetsCompat.Type.statusBars())?.top ?: 0
 
     fun navigationBarHeight(): Int =
-        ViewCompat.getRootWindowInsets(view)?.getInsets(WindowInsetsCompat.Type.navigationBars())?.bottom ?: 0
+        barHeightOverride?.invoke(false) ?: ViewCompat.getRootWindowInsets(view)?.getInsets(WindowInsetsCompat.Type.navigationBars())?.bottom ?: 0
 
     fun apply() {
         if (disposed) return
