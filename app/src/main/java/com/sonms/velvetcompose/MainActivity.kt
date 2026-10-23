@@ -51,13 +51,22 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            var selectedSample by remember { mutableStateOf(SampleType.VERTICAL_TIME) }
+            // adb 로 바로 진입: --es sample SYSTEM_BARS --es bars_demo SCROLL|BASELINE|...
+            var selectedSample by remember {
+                mutableStateOf(
+                    SampleType.entries.firstOrNull { it.name == intent.getStringExtra("sample") }
+                        ?: SampleType.VERTICAL_TIME,
+                )
+            }
 
             VelvetComposeTheme(darkTheme = false) {
                 if (selectedSample == SampleType.SYSTEM_BARS) {
                     // 바 뒤까지 그려야 하므로 Scaffold 의 innerPadding 밖에서 전체 화면으로 띄운다.
                     SystemBarsHost {
-                        SystemBarsShowcase(onBack = { selectedSample = SampleType.VERTICAL_TIME })
+                        SystemBarsShowcase(
+                            onBack = { selectedSample = SampleType.VERTICAL_TIME },
+                            initialDemo = intent.getStringExtra("bars_demo"),
+                        )
                     }
                     return@VelvetComposeTheme
                 }

@@ -5,6 +5,8 @@ import android.view.SurfaceHolder
 import android.view.SurfaceView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -49,6 +51,7 @@ import com.sonms.systembars.systemBars
  */
 private enum class BarsDemo(val label: String) {
     SCROLL("Auto 스크롤"),
+    BASELINE("비교(modifier 없음)"),
     DECLARED("지정/추출 색"),
     DIALOG("Dialog"),
     SURFACE("PixelCopy"),
@@ -59,12 +62,13 @@ private val bandColors = listOf(
 )
 
 @Composable
-fun SystemBarsShowcase(onBack: () -> Unit) {
-    var demo by remember { mutableStateOf(BarsDemo.SCROLL) }
+fun SystemBarsShowcase(onBack: () -> Unit, initialDemo: String? = null) {
+    var demo by remember { mutableStateOf(BarsDemo.entries.firstOrNull { it.name == initialDemo } ?: BarsDemo.SCROLL) }
 
     Box(Modifier.fillMaxSize()) {
         when (demo) {
-            BarsDemo.SCROLL -> ScrollDemo()
+            BarsDemo.SCROLL -> ScrollDemo(sampled = true)
+            BarsDemo.BASELINE -> ScrollDemo(sampled = false)
             BarsDemo.DECLARED -> DeclaredDemo()
             BarsDemo.DIALOG -> DialogDemo()
             BarsDemo.SURFACE -> SurfaceDemo()
@@ -78,6 +82,7 @@ fun SystemBarsShowcase(onBack: () -> Unit) {
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .navigationBarsPadding()
+                .horizontalScroll(rememberScrollState())
                 .padding(8.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
@@ -90,8 +95,8 @@ fun SystemBarsShowcase(onBack: () -> Unit) {
 
 /** 흰/검정/파랑/노랑/그라데이션 띠를 스크롤하면서 `Auto` 가 아이콘을 뒤집는지 본다. */
 @Composable
-private fun ScrollDemo() {
-    LazyColumn(Modifier.systemBars(BarContent.Auto, BarContent.Auto).fillMaxSize()) {
+private fun ScrollDemo(sampled: Boolean) {
+    LazyColumn((if (sampled) Modifier.systemBars(BarContent.Auto, BarContent.Auto) else Modifier).fillMaxSize()) {
         itemsIndexed(List(30) { it }) { i, _ ->
             val c = bandColors[i % bandColors.size]
             Box(
