@@ -44,17 +44,17 @@ class SystemBarsInstrumentedTest {
     private var view: View? = null
 
     @Composable
-    private fun TestHost(content: @Composable () -> Unit) {
+    private fun TestHost(config: SystemBarsConfig = fast, content: @Composable () -> Unit) {
         val v = LocalView.current
         view = v
-        val controller = remember(v) {
+        val controller = remember(v, config) {
             // Draw behind the bars like an edge-to-edge app, so the bar strips overlap the content.
             v.activity().window.apply {
                 WindowCompat.setDecorFitsSystemWindows(this, false)
                 statusBarColor = android.graphics.Color.TRANSPARENT
                 navigationBarColor = android.graphics.Color.TRANSPARENT
             }
-            SystemBarsController(v.activity().window, v, fast) { 40 }
+            SystemBarsController(v.activity().window, v, config) { 40 }
         }
         CompositionLocalProvider(LocalSystemBarsController provides controller, content = content)
     }
@@ -189,6 +189,41 @@ class SystemBarsInstrumentedTest {
         waitFor("white window → dark icons") { statusDarkIcons() }
         color = Color.Black
         waitFor("black window → light icons") { !statusDarkIcons() }
+    }
+
+    private fun midGrayOnNavigation(config: SystemBarsConfig) {
+        assumeTrue("scrim applies on API 29+", Build.VERSION.SDK_INT >= 29)
+        rule.setContent {
+            TestHost(config) {
+                Box(
+                    Modifier
+                        .systemBars(BarContent.Dark, BarContent.Auto)
+                        .fillMaxSize()
+                        .drawBehind { drawRect(Color(0xFF808080)) },
+                )
+            }
+        }
+        val threeButton = onMain {
+            (androidx.core.view.ViewCompat.getRootWindowInsets(view!!)
+                ?.getInsets(androidx.core.view.WindowInsetsCompat.Type.tappableElement())?.bottom ?: 0) > 0
+        }
+        assumeTrue("needs 3-button navigation", threeButton)
+    }
+
+    /**
+     * 3-button navigation on API 29+ only. Mid-gray alone reads as a dark background (light icons), but
+     * under the light scrim the system adds, dark icons are the readable choice.
+     */
+    @Test
+    fun navigationScrim_flipsMidGrayToDarkIcons() {
+        midGrayOnNavigation(fast.copy(scrimModel = ScrimModel.AndroidxDefault))
+        waitFor("scrim model → dark nav icons over mid-gray") { navDarkIcons() }
+    }
+
+    @Test
+    fun navigationScrim_disabledKeepsLightIconsOnMidGray() {
+        midGrayOnNavigation(fast)
+        waitFor("no scrim model → light nav icons over mid-gray") { !navDarkIcons() }
     }
 }
 
