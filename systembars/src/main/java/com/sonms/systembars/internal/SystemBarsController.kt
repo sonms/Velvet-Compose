@@ -7,6 +7,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
+import android.os.Trace
 import android.util.Log
 import android.view.PixelCopy
 import android.view.View
@@ -62,6 +63,11 @@ internal class SystemBarsController(
 
     fun apply() {
         if (disposed) return
+        Trace.beginSection("SystemBars.apply")
+        try { applyInternal() } finally { Trace.endSection() }
+    }
+
+    private fun applyInternal() {
         val controller = WindowCompat.getInsetsController(window, view)
         val status = registry.resolveStatus()
         val nav = registry.resolveNavigation()
@@ -172,12 +178,13 @@ internal fun averageArgb(bitmap: Bitmap): Int? {
     return averageArgb(pixels)
 }
 
-internal fun averageArgb(pixels: IntArray): Int? {
+internal fun averageArgb(pixels: IntArray, count: Int = pixels.size): Int? {
     var r = 0L; var g = 0L; var b = 0L; var n = 0
-    for (p in pixels) {
+    for (i in 0 until count) {
+        val p = pixels[i]
         if ((p ushr 24) < 0x80) continue
         r += (p ushr 16) and 0xFF; g += (p ushr 8) and 0xFF; b += p and 0xFF; n++
     }
-    if (n * 10 < pixels.size) return null
+    if (n * 10 < count) return null
     return (0xFF shl 24) or ((r / n).toInt() shl 16) or ((g / n).toInt() shl 8) or (b / n).toInt()
 }

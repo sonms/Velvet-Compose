@@ -35,6 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sonms.ratingbar.RatingBar
+import com.sonms.systembars.SystemBarsConfig
 import com.sonms.systembars.SystemBarsHost
 import com.sonms.velvetcompose.ui.theme.VelvetComposeTheme
 import com.sonms.wheelpicker.HorizontalWheelPicker
@@ -62,7 +63,9 @@ class MainActivity : ComponentActivity() {
             VelvetComposeTheme(darkTheme = false) {
                 if (selectedSample == SampleType.SYSTEM_BARS) {
                     // 바 뒤까지 그려야 하므로 Scaffold 의 innerPadding 밖에서 전체 화면으로 띄운다.
-                    SystemBarsHost {
+                    SystemBarsHost(
+                        config = SystemBarsConfig(intervalMillis = intent.getLongExtra("interval", 100L)),
+                    ) {
                         SystemBarsShowcase(
                             onBack = { selectedSample = SampleType.VERTICAL_TIME },
                             initialDemo = intent.getStringExtra("bars_demo"),

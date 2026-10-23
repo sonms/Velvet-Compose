@@ -1,6 +1,9 @@
 package com.sonms.systembars
 
+import android.os.Trace
 import android.util.Log
+import android.view.View
+import android.view.ViewTreeObserver
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
@@ -76,7 +79,10 @@ private class SystemBarsNode(
     private var windowOffset = Offset.Zero
     private var lastSampleNanos = 0L
     private var trailingScheduled = false
-    private val pixels = IntArray(SystemBarsController.SAMPLE_W * SystemBarsController.SAMPLE_H)
+    private var ownRedraws = 0
+    private var drawObserverView: View? = null
+    private val onFrame = ViewTreeObserver.OnDrawListener { requestSampleIfDue() }
+    private val pixels = IntArray(16 * 160)
 
     // Not an auto-invalidating node: we manage our own redraw.
     override val shouldAutoInvalidate: Boolean get() = false
@@ -93,10 +99,17 @@ private class SystemBarsNode(
         setPriority = h::setPriority
         depthKnown = false
         updateHandle = { h.update(statusSlot, navigationSlot) }
+        // A parent's draw block does not re-run when only its children redraw (e.g. scrolling), so
+        // watch frames at the window level and ask for a re-draw of this node when a sample is due.
+        val view = currentValueOf(LocalView)
+        drawObserverView = view
+        if (view.viewTreeObserver.isAlive) view.viewTreeObserver.addOnDrawListener(onFrame)
     }
 
     override fun onDetach() {
         disposeHandle?.invoke()
+        drawObserverView?.let { v -> if (v.viewTreeObserver.isAlive) v.viewTreeObserver.removeOnDrawListener(onFrame) }
+        drawObserverView = null
         disposeHandle = null
         updateHandle = null
         setPriority = null
@@ -140,59 +153,111 @@ private class SystemBarsNode(
 
         val wait = c.config.intervalMillis * 1_000_000L - (System.nanoTime() - lastSampleNanos)
         if (wait > 0) {
-            // Trailing sample so the last frame of a scroll is still observed.
-            if (!trailingScheduled) {
-                trailingScheduled = true
-                coroutineScope.launch {
-                    delay(wait / 1_000_000L + 1)
-                    trailingScheduled = false
-                    invalidateDraw()
-                }
-            }
+            scheduleTrailing(wait)
             return
         }
         lastSampleNanos = System.nanoTime()
 
+        // Visible in Perfetto/systrace as "SystemBars.sample" (enable app tracing for the package).
+        Trace.beginSection("SystemBars.sample")
         var changed = false
-        if (statusSlot.content == BarContent.Auto) changed = sampleBar(statusSlot, top = true, c.statusBarHeight()) || changed
-        if (navigationSlot.content == BarContent.Auto) changed = sampleBar(navigationSlot, top = false, c.navigationBarHeight()) || changed
+        try {
+            changed = sampleBars(c)
+        } finally {
+            Trace.endSection()
+        }
         if (changed) coroutineScope.launch { c.apply() }
     }
 
-    /** Draws the part of the content under the bar into the sample bitmap and stores its mean color. */
-    private fun ContentDrawScope.sampleBar(slot: BarSlot, top: Boolean, barHeightPx: Int): Boolean {
-        if (barHeightPx <= 0 || size.width <= 0f) return false
+    /** Window-level frame callback: request a re-draw of this node when a sample is due. */
+    private fun requestSampleIfDue() {
+        // The frame produced by our own re-draw request must not trigger another one (endless loop).
+        if (ownRedraws > 0) { ownRedraws--; return }
+        val c = controller ?: return
+        if (statusSlot.content != BarContent.Auto && navigationSlot.content != BarContent.Auto) return
+        val wait = c.config.intervalMillis * 1_000_000L - (System.nanoTime() - lastSampleNanos)
+        if (wait > 0) scheduleTrailing(wait) else requestOwnRedraw()
+    }
+
+    /** Not inside the draw traversal: invalidate on the next main-thread turn. */
+    private fun requestOwnRedraw() {
+        ownRedraws++
+        coroutineScope.launch { invalidateDraw() }
+    }
+
+    /** Trailing sample so the last frame of a scroll is still observed. */
+    private fun scheduleTrailing(waitNanos: Long) {
+        if (trailingScheduled) return
+        trailingScheduled = true
+        coroutineScope.launch {
+            delay(waitNanos / 1_000_000L + 1)
+            trailingScheduled = false
+            ownRedraws++
+            invalidateDraw()
+        }
+    }
+
+    /**
+     * Draws the node's content once, scaled down to a [NODE_W]×[NODE_H] software bitmap, then reads the rows
+     * that sit under each bar. One content pass serves both bars (the cost is dominated by replaying the draw
+     * commands, not by pixel count).
+     */
+    private fun ContentDrawScope.sampleBars(c: SystemBarsController): Boolean {
+        val wantStatus = statusSlot.content == BarContent.Auto
+        val wantNav = navigationSlot.content == BarContent.Auto
+        if (size.width <= 0f || size.height <= 0f) return false
         val windowHeight = currentValueOf(LocalView).height.toFloat()
-        val barTop = if (top) 0f else windowHeight - barHeightPx
-        val localTop = (barTop - windowOffset.y).coerceIn(0f, size.height)
-        val localBottom = (barTop + barHeightPx - windowOffset.y).coerceIn(0f, size.height)
-        val rectHeight = localBottom - localTop
-        if (rectHeight <= 0f) return false
+        val statusRows = if (wantStatus) rowsUnderBar(top = true, c.statusBarHeight(), windowHeight) else null
+        val navRows = if (wantNav) rowsUnderBar(top = false, c.navigationBarHeight(), windowHeight) else null
+        if (statusRows == null && navRows == null) return false
 
-        val bitmap = sampleBitmap ?: ImageBitmap(SystemBarsController.SAMPLE_W, SystemBarsController.SAMPLE_H)
-            .also { sampleBitmap = it; sampleCanvas = Canvas(it) }
+        val bitmap = sampleBitmap ?: ImageBitmap(NODE_W, NODE_H).also { sampleBitmap = it; sampleCanvas = Canvas(it) }
         val canvas = sampleCanvas!!
-        val w = SystemBarsController.SAMPLE_W.toFloat()
-        val h = SystemBarsController.SAMPLE_H.toFloat()
-
         val outer = this
+        val nodeWidth = size.width // read before drawContext.size is swapped below
+        val nodeHeight = size.height
         val savedCanvas = drawContext.canvas
         val savedSize = drawContext.size
         drawContext.canvas = canvas
-        drawContext.size = Size(w, h)
+        drawContext.size = Size(NODE_W.toFloat(), NODE_H.toFloat())
         try {
-            drawRect(androidx.compose.ui.graphics.Color.Transparent, size = Size(w, h), blendMode = BlendMode.Clear)
-            scale(w / outer.size.width, h / rectHeight, pivot = Offset.Zero) {
-                translate(0f, -localTop) { outer.drawContent() }
-            }
+            drawRect(androidx.compose.ui.graphics.Color.Transparent, size = Size(NODE_W.toFloat(), NODE_H.toFloat()), blendMode = BlendMode.Clear)
+            scale(NODE_W / nodeWidth, NODE_H / nodeHeight, pivot = Offset.Zero) { outer.drawContent() }
         } finally {
             drawContext.canvas = savedCanvas
             drawContext.size = savedSize
         }
-        bitmap.readPixels(pixels)
-        val avg = averageArgb(pixels) ?: return false
+
+        var changed = false
+        if (statusRows != null) changed = readRows(bitmap, statusRows, statusSlot) || changed
+        if (navRows != null) changed = readRows(bitmap, navRows, navigationSlot) || changed
+        return changed
+    }
+
+    /** Bitmap rows (inclusive start, exclusive end) covered by the bar, or null if the bar misses this node. */
+    private fun ContentDrawScope.rowsUnderBar(top: Boolean, barHeightPx: Int, windowHeight: Float): IntRange? {
+        if (barHeightPx <= 0) return null
+        val barTop = if (top) 0f else windowHeight - barHeightPx
+        val localTop = (barTop - windowOffset.y).coerceIn(0f, size.height)
+        val localBottom = (barTop + barHeightPx - windowOffset.y).coerceIn(0f, size.height)
+        if (localBottom - localTop <= 0f) return null
+        val r0 = (localTop / size.height * NODE_H).toInt().coerceIn(0, NODE_H - 1)
+        val r1 = kotlin.math.ceil(localBottom / size.height * NODE_H).toInt().coerceIn(r0 + 1, NODE_H)
+        return r0 until r1
+    }
+
+    private fun readRows(bitmap: ImageBitmap, rows: IntRange, slot: BarSlot): Boolean {
+        val height = rows.last - rows.first + 1
+        bitmap.readPixels(pixels, startX = 0, startY = rows.first, width = NODE_W, height = height)
+        val avg = averageArgb(pixels, NODE_W * height) ?: return false
         val changed = slot.sampleArgb != avg
         slot.sampleArgb = avg
         return changed
     }
+
+    private companion object {
+        const val NODE_W = 16
+        const val NODE_H = 160
+    }
+
 }
