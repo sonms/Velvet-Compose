@@ -35,6 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sonms.ratingbar.RatingBar
+import com.sonms.systembars.SystemBarsHost
 import com.sonms.velvetcompose.ui.theme.VelvetComposeTheme
 import com.sonms.wheelpicker.HorizontalWheelPicker
 import com.sonms.wheelpicker.VerticalWheelPicker
@@ -42,7 +43,7 @@ import com.sonms.wheelpicker.state.rememberWheelPickerState
 import com.sonms.wheelpicker.style.WheelPickerDefaults
 
 enum class SampleType {
-    VERTICAL_TIME, HORIZONTAL_TIME, RATING_BAR, MODIFIER_NODE
+    VERTICAL_TIME, HORIZONTAL_TIME, RATING_BAR, MODIFIER_NODE, SYSTEM_BARS
 }
 
 class MainActivity : ComponentActivity() {
@@ -53,6 +54,13 @@ class MainActivity : ComponentActivity() {
             var selectedSample by remember { mutableStateOf(SampleType.VERTICAL_TIME) }
 
             VelvetComposeTheme(darkTheme = false) {
+                if (selectedSample == SampleType.SYSTEM_BARS) {
+                    // 바 뒤까지 그려야 하므로 Scaffold 의 innerPadding 밖에서 전체 화면으로 띄운다.
+                    SystemBarsHost {
+                        SystemBarsShowcase(onBack = { selectedSample = SampleType.VERTICAL_TIME })
+                    }
+                    return@VelvetComposeTheme
+                }
                 Scaffold (
                     modifier = Modifier
                         .fillMaxSize(),
@@ -85,6 +93,10 @@ class MainActivity : ComponentActivity() {
                             Button(onClick = { selectedSample = SampleType.MODIFIER_NODE }) {
                                 Text(text = "Modifier.Node")
                             }
+
+                            Button(onClick = { selectedSample = SampleType.SYSTEM_BARS }) {
+                                Text(text = "SystemBars")
+                            }
                         }
 
                         when (selectedSample) {
@@ -92,6 +104,7 @@ class MainActivity : ComponentActivity() {
                             SampleType.HORIZONTAL_TIME -> HorizontalTimePickerSample()
                             SampleType.RATING_BAR -> VelvetRatingBarSample()
                             SampleType.MODIFIER_NODE -> ModifierNodeShowcase()
+                            SampleType.SYSTEM_BARS -> Unit
                         }
                     }
                 }
