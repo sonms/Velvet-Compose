@@ -289,7 +289,7 @@ Features spring animation, haptic feedback, half-step support, and custom icon s
 
 ### 📸 Preview
 
-| Default Star | Custom Icon |
+| Default Star | Custom Style |
 |---|---|
 | <video src="assets/ratingbar_star_preview.mp4" width="200"/> | <video src="assets/ratingbar_custom_preview.mp4" width="200"/> |
 
@@ -377,6 +377,12 @@ RatingBar(
 Makes the status/navigation bar icons readable on whatever is drawn behind them, per screen.
 `enableEdgeToEdge()` only makes the bars transparent; it does not adapt icon contrast to the content.
 
+### 📸 Preview
+
+| Auto (scroll) | BarPaint.Sampled |
+|---|---|
+| <video src="assets/systembars_auto_preview.mp4" width="200"/> | <video src="assets/systembars_paint_preview.mp4" width="200"/> |
+
 ```kotlin
 // Activity: enableEdgeToEdge() before setContent
 SystemBarsHost {
@@ -401,6 +407,10 @@ function for you. It removes the boilerplate wall that keeps people on `composed
 > Developer tooling for people who write `Modifier.Node` by hand (library authors).
 > Single maintainer, no SLA, no API compatibility guarantee.
 > Design notes: [`ARCHITECTURE.md`](ARCHITECTURE.md) · vs `composed`: [`COMPARISON.md`](modifier-node-sample/COMPARISON.md)
+
+### 📸 Preview
+
+<video src="assets/modifier_node_preview.mp4" width="200"/>
 
 ### Setup
 
