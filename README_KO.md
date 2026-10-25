@@ -20,6 +20,7 @@ iOS 감성의 부드럽고 아름다운 Jetpack Compose 컴포넌트 라이브�
 |---|---|---|
 | 🎡 **WheelPicker** | [![Maven Central](https://img.shields.io/maven-central/v/io.github.sonms/wheelpicker.svg)](https://central.sonatype.com/artifact/io.github.sonms/wheelpicker) | 무한 스크롤을 지원하는 iOS 스타일 3D 휠 피커 |
 | ⭐ **RatingBar** | [![Maven Central](https://img.shields.io/maven-central/v/io.github.sonms/ratingbar.svg)](https://central.sonatype.com/artifact/io.github.sonms/ratingbar) | 스프링 애니메이션과 햅틱 피드백을 지원하는 커스터마이징 가능한 별점 바 |
+| 📱 **SystemBars** | [![Maven Central](https://img.shields.io/maven-central/v/io.github.sonms/systembars.svg)](https://central.sonatype.com/artifact/io.github.sonms/systembars) | 뒤에 깔린 화면에 맞춰 상태바/내비바 아이콘(과 선택적으로 바 색)을 자동 조정 |
 
 ## 🧩 도구
 
@@ -37,6 +38,7 @@ iOS 감성의 부드럽고 아름다운 Jetpack Compose 컴포넌트 라이브�
 dependencies {
     implementation("io.github.sonms:wheelpicker:0.0.2")
     implementation("io.github.sonms:ratingbar:0.0.2")
+    implementation("io.github.sonms:systembars:0.1.0")
 }
 ```
 
@@ -367,6 +369,27 @@ RatingBar(
 |---|---|
 | `StepSize.FULL` | 1.0 단위로 선택 |
 | `StepSize.HALF` | 0.5 단위로 선택 |
+
+---
+
+## 📱 SystemBars
+
+화면마다 다른 배경 위에서 상태바/내비바 아이콘이 잘 보이도록 자동으로 맞춰 준다.
+`enableEdgeToEdge()` 는 바를 투명하게 만들 뿐, 아이콘 명암은 맞춰 주지 않는다.
+
+```kotlin
+// Activity: setContent 전에 enableEdgeToEdge()
+SystemBarsHost {
+    Box(Modifier.systemBars().fillMaxSize().background(color)) { // 기본 Auto, background() 보다 앞에 둘 것
+        // 콘텐츠
+    }
+}
+```
+
+- `BarContent.Auto` 는 바 뒤 픽셀을 샘플링한다(소프트웨어 canvas 교체, `PixelCopy` 없음). `AutoWindow` 는 `PixelCopy` 를 쓴다(API 26+, `SurfaceView`/영상 포함). `Background(color)`, `Light`, `Dark`, `Inherit` 는 선언형이다.
+- `BarPaint`(기본 `None`, `Sampled`, `Solid(color)`)로 바 영역 색도 화면에 맞춰 칠할 수 있다.
+- 중첩된 modifier 는 스택으로 동작하고(가장 깊은 것이 우선), `Dialog` 와 3버튼 내비바 스크림도 처리한다.
+- Android 전용, minSdk 24. 상세 / 한계 / 측정 비용: [systembars/README.md](systembars/README.md) · [API 문서](https://sonms.github.io/Velvet-Compose/systembars/)
 
 ---
 

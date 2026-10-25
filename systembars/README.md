@@ -156,6 +156,8 @@ SystemBarsHost(
 
 ## API 문서 (Dokka)
 
+온라인: <https://sonms.github.io/Velvet-Compose/systembars/> (master 푸시 시 GitHub Pages 로 자동 배포)
+
 ```
 ./gradlew :systembars:dokkaGenerate   # build/dokka/html/index.html
 ```

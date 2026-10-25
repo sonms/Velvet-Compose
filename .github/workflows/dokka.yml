@@ -28,6 +28,9 @@ jobs:
       - name: Generate Dokka HTML - RatingBar
         run: ./gradlew :ratingbar:dokkaGeneratePublicationHtml --no-configuration-cache
 
+      - name: Generate Dokka HTML - SystemBars
+        run: ./gradlew :systembars:dokkaGeneratePublicationHtml --no-configuration-cache
+
       # :modifier-node-processor is internal machinery with no consumer-facing API — not documented.
       - name: Generate Dokka HTML - Modifier Node Annotations
         run: ./gradlew :modifier-node-annotations:dokkaGeneratePublicationHtml --no-configuration-cache
@@ -54,6 +57,14 @@ jobs:
           branch: gh-pages
           folder: ratingbar/build/dokka/html
           target-folder: ratingbar
+          clean: false
+
+      - name: Deploy SystemBars Docs
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages
+          folder: systembars/build/dokka/html
+          target-folder: systembars
           clean: false
 
       - name: Deploy Modifier Node Annotations Docs

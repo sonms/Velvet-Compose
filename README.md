@@ -20,6 +20,7 @@ Velvet provides silky-smooth UI components with full customization support.
 |---|---|---|
 | 🎡 **WheelPicker** | [![Maven Central](https://img.shields.io/maven-central/v/io.github.sonms/wheelpicker.svg)](https://central.sonatype.com/artifact/io.github.sonms/wheelpicker) | iOS-style 3D wheel picker with infinite scroll |
 | ⭐ **RatingBar** | [![Maven Central](https://img.shields.io/maven-central/v/io.github.sonms/ratingbar.svg)](https://central.sonatype.com/artifact/io.github.sonms/ratingbar) | Customizable rating bar with spring animation & haptic feedback |
+| 📱 **SystemBars** | [![Maven Central](https://img.shields.io/maven-central/v/io.github.sonms/systembars.svg)](https://central.sonatype.com/artifact/io.github.sonms/systembars) | Status/navigation bar icons (and optional bar paint) that adapt to the screen behind them |
 
 ## 🧩 Tooling
 
@@ -37,6 +38,7 @@ Velvet provides silky-smooth UI components with full customization support.
 dependencies {
     implementation("io.github.sonms:wheelpicker:0.0.2")
     implementation("io.github.sonms:ratingbar:0.0.2")
+    implementation("io.github.sonms:systembars:0.1.0")
 }
 ```
 
@@ -367,6 +369,27 @@ RatingBar(
 |---|---|
 | `StepSize.FULL` | Select in increments of 1.0 |
 | `StepSize.HALF` | Select in increments of 0.5 |
+
+---
+
+## 📱 SystemBars
+
+Makes the status/navigation bar icons readable on whatever is drawn behind them, per screen.
+`enableEdgeToEdge()` only makes the bars transparent; it does not adapt icon contrast to the content.
+
+```kotlin
+// Activity: enableEdgeToEdge() before setContent
+SystemBarsHost {
+    Box(Modifier.systemBars().fillMaxSize().background(color)) { // Auto by default; keep it before background()
+        // content
+    }
+}
+```
+
+- `BarContent.Auto` samples the pixels behind the bar (software-canvas swap, no `PixelCopy`); `AutoWindow` uses `PixelCopy` (API 26+, includes `SurfaceView`/video); `Background(color)`, `Light`, `Dark` and `Inherit` are declarative.
+- `BarPaint` (`None` by default, `Sampled`, `Solid(color)`) also paints the bar area to match the screen.
+- Nested modifiers stack (deepest wins); `Dialog` windows are supported; 3-button navigation scrim is accounted for.
+- Android only, minSdk 24. Details, limits and measured cost: [systembars/README.md](systembars/README.md) (Korean) · [API docs](https://sonms.github.io/Velvet-Compose/systembars/)
 
 ---
 
