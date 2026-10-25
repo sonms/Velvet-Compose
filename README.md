@@ -379,7 +379,7 @@ Makes the status/navigation bar icons readable on whatever is drawn behind them,
 
 ### 📸 Preview
 
-| Auto (scroll) | BarPaint.Sampled |
+| Auto (scroll) | BarPaint: None → Sampled → Solid (status + navigation bar) |
 |---|---|
 | <img src="assets/systembars_auto_preview.gif" width="200"/> | <img src="assets/systembars_paint_preview.gif" width="200"/> |
 

@@ -379,7 +379,7 @@ RatingBar(
 
 ### 📸 미리보기
 
-| Auto (스크롤) | BarPaint.Sampled |
+| Auto (스크롤) | BarPaint: 투명 → Sampled → Solid (상태바 + 내비바) |
 |---|---|
 | <img src="assets/systembars_auto_preview.gif" width="200"/> | <img src="assets/systembars_paint_preview.gif" width="200"/> |
 
