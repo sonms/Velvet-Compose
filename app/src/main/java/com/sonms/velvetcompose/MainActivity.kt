@@ -11,7 +11,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -94,7 +95,14 @@ class MainActivity : ComponentActivity() {
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center,
                     ) {
-                        Row(modifier = Modifier.fillMaxWidth()) {
+                        // 버튼이 화면 폭보다 길어서 가로로 스크롤한다 (weight Spacer 는 스크롤 Row 에서 쓸 수 없다).
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState())
+                                .padding(horizontal = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
                             Button(onClick = {
                                 selectedSample = if (selectedSample == SampleType.VERTICAL_TIME)
                                     SampleType.HORIZONTAL_TIME
@@ -104,13 +112,9 @@ class MainActivity : ComponentActivity() {
                                 Text(text = "Toggle Time Picker")
                             }
 
-                            Spacer(modifier = Modifier.weight(1f))
-
                             Button(onClick = { selectedSample = SampleType.RATING_BAR }) {
                                 Text(text = "Toggle Rating Star")
                             }
-
-                            Spacer(modifier = Modifier.weight(1f))
 
                             Button(onClick = { selectedSample = SampleType.MODIFIER_NODE }) {
                                 Text(text = "Modifier.Node")
