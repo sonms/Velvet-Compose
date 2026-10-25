@@ -1,0 +1,37 @@
+$dokka.format:html-v1
+$dokka.linkExtension:html
+$dokka.location:com.sonms.systembars////PointingToDeclaration/systembars/com.sonms.systembars/index.html
+$dokka.location:com.sonms.systembars//SystemBarsDialog/#kotlin.Function0[kotlin.Unit]#androidx.compose.ui.window.DialogProperties#com.sonms.systembars.SystemBarsConfig#kotlin.Function0[kotlin.Unit]/PointingToDeclaration/systembars/com.sonms.systembars/-system-bars-dialog.html
+$dokka.location:com.sonms.systembars//SystemBarsHost/#com.sonms.systembars.SystemBarsConfig#kotlin.Function0[kotlin.Unit]/PointingToDeclaration/systembars/com.sonms.systembars/-system-bars-host.html
+$dokka.location:com.sonms.systembars//systemBars/androidx.compose.ui.Modifier#com.sonms.systembars.BarContent#com.sonms.systembars.BarContent#com.sonms.systembars.BarPaint#com.sonms.systembars.BarPaint/PointingToDeclaration/systembars/com.sonms.systembars/system-bars.html
+$dokka.location:com.sonms.systembars/BarContent.Auto///PointingToDeclaration/systembars/com.sonms.systembars/-bar-content/-auto/index.html
+$dokka.location:com.sonms.systembars/BarContent.AutoWindow///PointingToDeclaration/systembars/com.sonms.systembars/-bar-content/-auto-window/index.html
+$dokka.location:com.sonms.systembars/BarContent.Background///PointingToDeclaration/systembars/com.sonms.systembars/-bar-content/-background/index.html
+$dokka.location:com.sonms.systembars/BarContent.Background/Background/#androidx.compose.ui.graphics.Color/PointingToDeclaration/systembars/com.sonms.systembars/-bar-content/-background/-background.html
+$dokka.location:com.sonms.systembars/BarContent.Background/color/#/PointingToDeclaration/systembars/com.sonms.systembars/-bar-content/-background/color.html
+$dokka.location:com.sonms.systembars/BarContent.Dark///PointingToDeclaration/systembars/com.sonms.systembars/-bar-content/-dark/index.html
+$dokka.location:com.sonms.systembars/BarContent.Inherit///PointingToDeclaration/systembars/com.sonms.systembars/-bar-content/-inherit/index.html
+$dokka.location:com.sonms.systembars/BarContent.Light///PointingToDeclaration/systembars/com.sonms.systembars/-bar-content/-light/index.html
+$dokka.location:com.sonms.systembars/BarContent///PointingToDeclaration/systembars/com.sonms.systembars/-bar-content/index.html
+$dokka.location:com.sonms.systembars/BarPaint.None///PointingToDeclaration/systembars/com.sonms.systembars/-bar-paint/-none/index.html
+$dokka.location:com.sonms.systembars/BarPaint.Sampled///PointingToDeclaration/systembars/com.sonms.systembars/-bar-paint/-sampled/index.html
+$dokka.location:com.sonms.systembars/BarPaint.Solid///PointingToDeclaration/systembars/com.sonms.systembars/-bar-paint/-solid/index.html
+$dokka.location:com.sonms.systembars/BarPaint.Solid/Solid/#androidx.compose.ui.graphics.Color/PointingToDeclaration/systembars/com.sonms.systembars/-bar-paint/-solid/-solid.html
+$dokka.location:com.sonms.systembars/BarPaint.Solid/color/#/PointingToDeclaration/systembars/com.sonms.systembars/-bar-paint/-solid/color.html
+$dokka.location:com.sonms.systembars/BarPaint///PointingToDeclaration/systembars/com.sonms.systembars/-bar-paint/index.html
+$dokka.location:com.sonms.systembars/ScrimModel.Companion///PointingToDeclaration/systembars/com.sonms.systembars/-scrim-model/-companion/index.html
+$dokka.location:com.sonms.systembars/ScrimModel.Companion/AndroidxDefault/#/PointingToDeclaration/systembars/com.sonms.systembars/-scrim-model/-companion/-androidx-default.html
+$dokka.location:com.sonms.systembars/ScrimModel///PointingToDeclaration/systembars/com.sonms.systembars/-scrim-model/index.html
+$dokka.location:com.sonms.systembars/ScrimModel/ScrimModel/#androidx.compose.ui.graphics.Color#androidx.compose.ui.graphics.Color/PointingToDeclaration/systembars/com.sonms.systembars/-scrim-model/-scrim-model.html
+$dokka.location:com.sonms.systembars/ScrimModel/darkScrim/#/PointingToDeclaration/systembars/com.sonms.systembars/-scrim-model/dark-scrim.html
+$dokka.location:com.sonms.systembars/ScrimModel/equals/#kotlin.Any?/PointingToDeclaration/systembars/com.sonms.systembars/-scrim-model/equals.html
+$dokka.location:com.sonms.systembars/ScrimModel/hashCode/#/PointingToDeclaration/systembars/com.sonms.systembars/-scrim-model/hash-code.html
+$dokka.location:com.sonms.systembars/ScrimModel/lightScrim/#/PointingToDeclaration/systembars/com.sonms.systembars/-scrim-model/light-scrim.html
+$dokka.location:com.sonms.systembars/SystemBarsConfig///PointingToDeclaration/systembars/com.sonms.systembars/-system-bars-config/index.html
+$dokka.location:com.sonms.systembars/SystemBarsConfig/SystemBarsConfig/#kotlin.Long#kotlin.Float#kotlin.Float#kotlin.Boolean#com.sonms.systembars.ScrimModel?/PointingToDeclaration/systembars/com.sonms.systembars/-system-bars-config/-system-bars-config.html
+$dokka.location:com.sonms.systembars/SystemBarsConfig/contrastEnforced/#/PointingToDeclaration/systembars/com.sonms.systembars/-system-bars-config/contrast-enforced.html
+$dokka.location:com.sonms.systembars/SystemBarsConfig/highThreshold/#/PointingToDeclaration/systembars/com.sonms.systembars/-system-bars-config/high-threshold.html
+$dokka.location:com.sonms.systembars/SystemBarsConfig/intervalMillis/#/PointingToDeclaration/systembars/com.sonms.systembars/-system-bars-config/interval-millis.html
+$dokka.location:com.sonms.systembars/SystemBarsConfig/lowThreshold/#/PointingToDeclaration/systembars/com.sonms.systembars/-system-bars-config/low-threshold.html
+$dokka.location:com.sonms.systembars/SystemBarsConfig/scrimModel/#/PointingToDeclaration/systembars/com.sonms.systembars/-system-bars-config/scrim-model.html
+com.sonms.systembars
