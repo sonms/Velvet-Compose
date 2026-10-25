@@ -69,7 +69,7 @@ dokka {
     }
 }
 
-val velvetVersion = "0.0.1"
+val velvetVersion = "0.1.0"
 
 mavenPublishing {
     coordinates(

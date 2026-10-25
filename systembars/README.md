@@ -6,15 +6,14 @@ edge-to-edge 앱에서 상태바 / 내비게이션바 **아이콘 명암**을 �
 `enableEdgeToEdge()` 는 바를 투명하게 만들 뿐 화면마다 다른 배경 위의 아이콘 명암은 맞춰 주지 않는다.
 `SystemBarStyle.auto()` 는 시스템 다크 모드만 보고, Accompanist `SystemUiController` 는 deprecated 다.
 
-> **상태.** 개발 중(`0.0.1`), **아직 Maven Central 에 올라가지 않았다.** Android 전용, minSdk 24.
+> **상태.** `0.1.0` (초기 공개 버전, API 는 아직 바뀔 수 있다). Android 전용, minSdk 24.
 > 설계 배경과 판단 근거는 [`ARCHITECTURE.md`](ARCHITECTURE.md) 참고.
 
 ## Setup
 
 ```kotlin
 dependencies {
-    implementation(project(":systembars"))
-    // 배포 후: implementation("io.github.sonms:systembars:0.0.1")
+    implementation("io.github.sonms:systembars:0.1.0")
 }
 ```
 

@@ -1,12 +1,13 @@
 name: Publish to Maven Central
 
-# Tag convention: "<module>-v<version>", e.g. wheelpicker-v0.0.2 or ratingbar-v0.0.2.
+# Tag convention: "<module>-v<version>", e.g. wheelpicker-v0.0.2 or systembars-v0.1.0.
 # Only the module named in the tag is built, tested, and published.
 on:
   push:
     tags:
       - 'wheelpicker-v*'
       - 'ratingbar-v*'
+      - 'systembars-v*'
       - 'modifier-node-annotations-v*'
       - 'modifier-node-processor-v*'
 
@@ -48,7 +49,7 @@ jobs:
           # Android library modules test the release variant; Kotlin JVM modules have no
           # variants, and the processor's real verification lives in :modifier-node-sample.
           case "$MODULE" in
-            wheelpicker|ratingbar)
+            wheelpicker|ratingbar|systembars)
               TEST_TASKS=":$MODULE:testReleaseUnitTest"
               ;;
             modifier-node-annotations|modifier-node-processor)
