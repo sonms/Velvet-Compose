@@ -13,7 +13,7 @@ edge-to-edge 앱에서 상태바 / 내비게이션바 **아이콘 명암**을 �
 
 | Auto (스크롤) | BarPaint.Sampled |
 |---|---|
-| <video src="../assets/systembars_auto_preview.mp4" width="200"/> | <video src="../assets/systembars_paint_preview.mp4" width="200"/> |
+| <img src="../assets/systembars_auto_preview.gif" width="200"/> | <img src="../assets/systembars_paint_preview.gif" width="200"/> |
 
 ## Setup
 

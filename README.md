@@ -53,7 +53,7 @@ Supports infinite scrolling, 3D graphic layers, and full style customization.
 
 | Vertical | Horizontal |
 |---|---|
-| <video src="assets/vertical_preview.mp4" width="200"/> | <video src="assets/horizontal_preview.mp4" width="200"/> |
+| <img src="assets/vertical_preview.gif" width="200"/> | <img src="assets/horizontal_preview.gif" width="200"/> |
 
 ### Basic Usage
 
@@ -291,7 +291,7 @@ Features spring animation, haptic feedback, half-step support, and custom icon s
 
 | Default Star | Custom Style |
 |---|---|
-| <video src="assets/ratingbar_star_preview.mp4" width="200"/> | <video src="assets/ratingbar_custom_preview.mp4" width="200"/> |
+| <img src="assets/ratingbar_star_preview.gif" width="200"/> | <img src="assets/ratingbar_custom_preview.gif" width="200"/> |
 
 ### Basic Usage
 
@@ -381,7 +381,7 @@ Makes the status/navigation bar icons readable on whatever is drawn behind them,
 
 | Auto (scroll) | BarPaint.Sampled |
 |---|---|
-| <video src="assets/systembars_auto_preview.mp4" width="200"/> | <video src="assets/systembars_paint_preview.mp4" width="200"/> |
+| <img src="assets/systembars_auto_preview.gif" width="200"/> | <img src="assets/systembars_paint_preview.gif" width="200"/> |
 
 ```kotlin
 // Activity: enableEdgeToEdge() before setContent
@@ -410,7 +410,7 @@ function for you. It removes the boilerplate wall that keeps people on `composed
 
 ### 📸 Preview
 
-<video src="assets/modifier_node_preview.mp4" width="200"/>
+<img src="assets/modifier_node_preview.gif" width="200"/>
 
 ### Setup
 
