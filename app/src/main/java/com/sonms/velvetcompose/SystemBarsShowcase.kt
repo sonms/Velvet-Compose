@@ -1,0 +1,241 @@
+package com.sonms.velvetcompose
+
+import android.graphics.Color as AndroidColor
+import android.view.SurfaceHolder
+import android.view.SurfaceView
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.window.DialogProperties
+import com.sonms.systembars.BarContent
+import com.sonms.systembars.BarPaint
+import com.sonms.systembars.SystemBarsDialog
+import com.sonms.systembars.systemBars
+
+/**
+ * `:systembars` 라이브 데모. 상태바/내비바 아이콘이 화면 배경에 따라 바뀌는지 눈으로 확인한다.
+ * 바 뒤까지 그려야 하므로 `Scaffold` 의 innerPadding 없이 전체 화면을 쓴다.
+ *
+ * Live demo for `:systembars` — watch the status/navigation bar icons follow the screen behind them.
+ */
+private enum class BarsDemo(val label: String) {
+    SCROLL("Auto 스크롤"),
+    BASELINE("비교(modifier 없음)"),
+    DECLARED("지정/추출 색"),
+    DIALOG("Dialog"),
+    SURFACE("PixelCopy"),
+    STACKED("겹침(가려진 노드)"),
+    PAINT("바 칠하기"),
+}
+
+private val bandColors = listOf(
+    Color.White, Color(0xFF101010), Color(0xFF1E88E5), Color(0xFFFFEB3B), Color(0xFFE91E63), Color(0xFFF5F5F5),
+)
+
+@Composable
+fun SystemBarsShowcase(onBack: () -> Unit, initialDemo: String? = null, initialPaint: String? = null) {
+    var demo by remember { mutableStateOf(BarsDemo.entries.firstOrNull { it.name == initialDemo } ?: BarsDemo.SCROLL) }
+
+    Box(Modifier.fillMaxSize()) {
+        when (demo) {
+            BarsDemo.SCROLL -> ScrollDemo(sampled = true)
+            BarsDemo.BASELINE -> ScrollDemo(sampled = false)
+            BarsDemo.DECLARED -> DeclaredDemo()
+            BarsDemo.DIALOG -> DialogDemo()
+            BarsDemo.SURFACE -> SurfaceDemo()
+            BarsDemo.STACKED -> StackedDemo()
+            BarsDemo.PAINT -> PaintDemo(initialPaint)
+        }
+
+        // 컨트롤은 바 영역을 피해 안쪽에 둔다 (statusBarsPadding / navigationBarsPadding).
+        Column(Modifier.statusBarsPadding().padding(horizontal = 8.dp)) {
+            TextButton(onClick = onBack) { Text("← 돌아가기") }
+        }
+        Row(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .navigationBarsPadding()
+                .horizontalScroll(rememberScrollState())
+                .padding(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            BarsDemo.entries.forEach { d ->
+                FilterChip(selected = demo == d, onClick = { demo = d }, label = { Text(d.label) })
+            }
+        }
+    }
+}
+
+/** 흰/검정/파랑/노랑/그라데이션 띠를 스크롤하면서 `Auto` 가 아이콘을 뒤집는지 본다. */
+@Composable
+private fun ScrollDemo(sampled: Boolean, paint: BarPaint = BarPaint.None) {
+    LazyColumn(
+        (if (sampled) Modifier.systemBars(BarContent.Auto, BarContent.Auto, paint, paint) else Modifier).fillMaxSize(),
+    ) {
+        itemsIndexed(List(30) { it }) { i, _ ->
+            val c = bandColors[i % bandColors.size]
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(if (i % 7 == 6) 220.dp else 140.dp)
+                    .background(if (i % 7 == 6) Brush.verticalGradient(listOf(Color.White, Color.Black)) else Brush.linearGradient(listOf(c, c))),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text("#$i", color = if (c.luminanceIsLow()) Color.White else Color.Black)
+            }
+        }
+    }
+}
+
+/** 바 영역 칠하기: 투명(기본) / 샘플 색 단색 / 지정 색 단색. 스크롤하면서 상태바·내비바 띠를 본다. */
+@Composable
+private fun PaintDemo(initialMode: String? = null) {
+    var mode by remember {
+        mutableStateOf(when (initialMode) { "sampled" -> "샘플"; "solid" -> "단색"; else -> "투명" })
+    }
+    val solid by androidx.compose.animation.animateColorAsState(Color(0xFF3F51B5), label = "barSolid")
+    val paint = when (mode) {
+        "샘플" -> BarPaint.Sampled
+        "단색" -> BarPaint.Solid(solid)
+        else -> BarPaint.None
+    }
+    Box(Modifier.fillMaxSize()) {
+        ScrollDemo(sampled = true, paint = paint)
+        Row(Modifier.align(Alignment.Center), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            listOf("투명", "샘플", "단색").forEach { m ->
+                FilterChip(selected = mode == m, onClick = { mode = m }, label = { Text(m) })
+            }
+        }
+    }
+}
+
+/** 바깥 노드가 가려지는 구조: 안쪽 `ScrollDemo` 가 이기므로 바깥 `Auto` 는 샘플링할 필요가 없다. */
+@Composable
+private fun StackedDemo() {
+    Box(Modifier.systemBars(BarContent.Auto, BarContent.Auto).fillMaxSize()) {
+        ScrollDemo(sampled = true)
+    }
+}
+
+/** `Background(color)` 직접 지정. "추출 색"은 이미지 팔레트에서 뽑은 값을 같은 자리에 넘기면 된다. */
+@Composable
+private fun DeclaredDemo() {
+    var color by remember { mutableStateOf(Color(0xFF1E88E5)) }
+    Box(
+        Modifier
+            .systemBars(BarContent.Background(color), BarContent.Background(color))
+            .fillMaxSize()
+            .background(color),
+        contentAlignment = Alignment.Center,
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            bandColors.forEach { c ->
+                Box(
+                    Modifier
+                        .size(44.dp)
+                        .clip(CircleShape)
+                        .background(c)
+                        .clickable { color = c },
+                )
+            }
+        }
+    }
+}
+
+/** 다이얼로그는 별도 윈도우라 자체 호스트를 쓰는 `SystemBarsDialog` 로 연다. */
+@Composable
+private fun DialogDemo() {
+    var show by remember { mutableStateOf(false) }
+    Box(
+        // systemBars 를 background 보다 앞에 둬야 Auto 가 배경까지 샘플링한다.
+        Modifier.systemBars(BarContent.Auto, BarContent.Auto).fillMaxSize().background(Color.White),
+        contentAlignment = Alignment.Center,
+    ) {
+        Button(onClick = { show = true }) { Text("다이얼로그 열기") }
+    }
+    if (show) {
+        SystemBarsDialog(
+            onDismissRequest = { show = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
+        ) {
+            Box(
+                Modifier
+                    .systemBars(BarContent.Dark, BarContent.Dark)
+                    .fillMaxSize()
+                    .background(Color(0xFF101010))
+                    .clickable { show = false },
+                contentAlignment = Alignment.Center,
+            ) { Text("어두운 다이얼로그 (탭하면 닫힘)", color = Color.White) }
+        }
+    }
+}
+
+/** `SurfaceView` 는 Compose 레이어가 못 읽으므로 `AutoWindow`(PixelCopy). 탭하면 흰/검정이 바뀐다. */
+@Composable
+private fun SurfaceDemo() {
+    var dark by remember { mutableStateOf(false) }
+    val argb = (if (dark) Color.Black else Color.White).toArgb()
+    Box(
+        Modifier
+            .systemBars(BarContent.AutoWindow, BarContent.AutoWindow)
+            .fillMaxSize()
+            .clickable { dark = !dark },
+    ) {
+        AndroidView(
+            modifier = Modifier.fillMaxSize(),
+            factory = { ctx ->
+                SurfaceView(ctx).apply {
+                    holder.addCallback(object : SurfaceHolder.Callback {
+                        override fun surfaceCreated(h: SurfaceHolder) = Unit
+                        override fun surfaceChanged(h: SurfaceHolder, f: Int, w: Int, hh: Int) = paint(h, tag as? Int ?: AndroidColor.WHITE)
+                        override fun surfaceDestroyed(h: SurfaceHolder) = Unit
+                    })
+                }
+            },
+            update = { sv ->
+                sv.tag = argb
+                if (sv.holder.surface.isValid) paint(sv.holder, argb)
+            },
+        )
+        Text("SurfaceView — 탭하면 색 전환", Modifier.align(Alignment.Center), color = if (dark) Color.White else Color.Black)
+    }
+}
+
+private fun paint(holder: SurfaceHolder, argb: Int) {
+    val canvas = holder.lockCanvas() ?: return
+    try { canvas.drawColor(argb) } finally { holder.unlockCanvasAndPost(canvas) }
+}
+
+private fun Color.luminanceIsLow(): Boolean = (red * 0.2126f + green * 0.7152f + blue * 0.0722f) < 0.4f

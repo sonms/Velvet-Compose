@@ -1,0 +1,110 @@
+plugins {
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.vanniktech)
+    alias(libs.plugins.dokka)
+}
+
+android {
+    namespace = "com.sonms.systembars"
+    compileSdk = 36
+
+    defaultConfig {
+        minSdk = 24
+
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles("consumer-rules.pro")
+    }
+
+    buildTypes {
+        release {
+            isMinifyEnabled = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+    kotlinOptions {
+        jvmTarget = "11"
+    }
+    testOptions {
+        // 라이브러리의 androidTest APK 는 targetSdk 가 minSdk(24) 로 잡혀 기기에서 "이전 버전용 앱" 으로 차단된다.
+        targetSdk = 36
+    }
+}
+
+kotlin {
+    explicitApi()
+}
+
+composeCompiler {
+    reportsDestination = layout.buildDirectory.dir("compose_reports")
+    metricsDestination = layout.buildDirectory.dir("compose_metrics")
+}
+
+dependencies {
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.core.ktx)
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core) // 3.5.0 (via compose test) breaks on API 37
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
+}
+
+dokka {
+    dokkaSourceSets.main {
+        enableAndroidDocumentationLink.set(false)
+        reportUndocumented.set(true)
+        includes.from("Module.md")
+    }
+}
+
+val velvetVersion = "0.1.0"
+
+mavenPublishing {
+    coordinates(
+        groupId = "io.github.sonms",
+        artifactId = "systembars",
+        version = velvetVersion
+    )
+
+    pom {
+        name.set("VelvetCompose SystemBars")
+        description.set("Adaptive status/navigation bar icon appearance for edge-to-edge Compose apps, driven by declared colors or sampled pixels.")
+        url.set("https://github.com/sonms/Velvet-Compose")
+
+        licenses {
+            license {
+                name.set("Apache License 2.0")
+                url.set("https://www.apache.org/licenses/LICENSE-2.0")
+            }
+        }
+
+        developers {
+            developer {
+                id.set("sonms")
+                name.set("sonms")
+                email.set("smsms5676@naver.com")
+            }
+        }
+
+        scm {
+            url.set("https://github.com/sonms/Velvet-Compose")
+            connection.set("scm:git:git://github.com/sonms/Velvet-Compose.git")
+            developerConnection.set("scm:git:ssh://git@github.com/sonms/Velvet-Compose.git")
+        }
+    }
+
+    publishToMavenCentral()
+    signAllPublications()
+}

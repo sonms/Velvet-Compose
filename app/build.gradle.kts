@@ -56,6 +56,7 @@ kotlin {
 dependencies {
     implementation(project(":wheelpicker"))
     implementation(project(":ratingbar"))
+    implementation(project(":systembars"))
 
     // Modifier.Node 코드젠 — 노드 클래스에 @ModifierNodeFactory 를 붙이면
     // Modifier 확장 함수 + ModifierNodeElement 가 생성된다. (modifier-node-sample 참고)
