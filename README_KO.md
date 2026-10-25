@@ -53,7 +53,7 @@ Jetpack Compose를 위한 iOS 스타일 3D 휠 피커입니다.
 
 | Vertical | Horizontal |
 |---|---|
-| <video src="assets/vertical_preview.mp4" width="200"/> | <video src="assets/horizontal_preview.mp4" width="200"/> |
+| <img src="assets/vertical_preview.gif" width="200"/> | <img src="assets/horizontal_preview.gif" width="200"/> |
 
 ### 기본 사용법
 
@@ -291,7 +291,7 @@ Jetpack Compose를 위한 고도로 커스터마이징 가능한 별점 바입�
 
 | 기본 별 | 커스텀 아이콘 |
 |---|---|
-| <video src="assets/ratingbar_star_preview.mp4" width="200"/> | <video src="assets/ratingbar_custom_preview.mp4" width="200"/> |
+| <img src="assets/ratingbar_star_preview.gif" width="200"/> | <img src="assets/ratingbar_custom_preview.gif" width="200"/> |
 
 ### 기본 사용법
 
@@ -381,7 +381,7 @@ RatingBar(
 
 | Auto (스크롤) | BarPaint.Sampled |
 |---|---|
-| <video src="assets/systembars_auto_preview.mp4" width="200"/> | <video src="assets/systembars_paint_preview.mp4" width="200"/> |
+| <img src="assets/systembars_auto_preview.gif" width="200"/> | <img src="assets/systembars_paint_preview.gif" width="200"/> |
 
 ```kotlin
 // Activity: setContent 전에 enableEdgeToEdge()
@@ -410,7 +410,7 @@ SystemBarsHost {
 
 ### 📸 미리보기
 
-<video src="assets/modifier_node_preview.mp4" width="200"/>
+<img src="assets/modifier_node_preview.gif" width="200"/>
 
 ### 설정
 
