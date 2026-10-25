@@ -1,0 +1,28 @@
+$dokka.format:html-v1
+$dokka.linkExtension:html
+$dokka.location:com.sonms.modifiernode.annotations////PointingToDeclaration/modifier-node-annotations/com.sonms.modifiernode.annotations/index.html
+$dokka.location:com.sonms.modifiernode.annotations/GeneratedVisibility.Internal///PointingToDeclaration/{"org.jetbrains.dokka.links.EnumEntryDRIExtra":{"key":"org.jetbrains.dokka.links.EnumEntryDRIExtra"}}modifier-node-annotations/com.sonms.modifiernode.annotations/-generated-visibility/-internal/index.html
+$dokka.location:com.sonms.modifiernode.annotations/GeneratedVisibility.Public///PointingToDeclaration/{"org.jetbrains.dokka.links.EnumEntryDRIExtra":{"key":"org.jetbrains.dokka.links.EnumEntryDRIExtra"}}modifier-node-annotations/com.sonms.modifiernode.annotations/-generated-visibility/-public/index.html
+$dokka.location:com.sonms.modifiernode.annotations/GeneratedVisibility///PointingToDeclaration/modifier-node-annotations/com.sonms.modifiernode.annotations/-generated-visibility/index.html
+$dokka.location:com.sonms.modifiernode.annotations/GeneratedVisibility/entries/#/PointingToDeclaration/modifier-node-annotations/com.sonms.modifiernode.annotations/-generated-visibility/entries.html
+$dokka.location:com.sonms.modifiernode.annotations/GeneratedVisibility/valueOf/#kotlin.String/PointingToDeclaration/modifier-node-annotations/com.sonms.modifiernode.annotations/-generated-visibility/value-of.html
+$dokka.location:com.sonms.modifiernode.annotations/GeneratedVisibility/values/#/PointingToDeclaration/modifier-node-annotations/com.sonms.modifiernode.annotations/-generated-visibility/values.html
+$dokka.location:com.sonms.modifiernode.annotations/Invalidates///PointingToDeclaration/modifier-node-annotations/com.sonms.modifiernode.annotations/-invalidates/index.html
+$dokka.location:com.sonms.modifiernode.annotations/Invalidates/scopes/#/PointingToDeclaration/modifier-node-annotations/com.sonms.modifiernode.annotations/-invalidates/scopes.html
+$dokka.location:com.sonms.modifiernode.annotations/InvalidationScope.Draw///PointingToDeclaration/{"org.jetbrains.dokka.links.EnumEntryDRIExtra":{"key":"org.jetbrains.dokka.links.EnumEntryDRIExtra"}}modifier-node-annotations/com.sonms.modifiernode.annotations/-invalidation-scope/-draw/index.html
+$dokka.location:com.sonms.modifiernode.annotations/InvalidationScope.Measure///PointingToDeclaration/{"org.jetbrains.dokka.links.EnumEntryDRIExtra":{"key":"org.jetbrains.dokka.links.EnumEntryDRIExtra"}}modifier-node-annotations/com.sonms.modifiernode.annotations/-invalidation-scope/-measure/index.html
+$dokka.location:com.sonms.modifiernode.annotations/InvalidationScope.None///PointingToDeclaration/{"org.jetbrains.dokka.links.EnumEntryDRIExtra":{"key":"org.jetbrains.dokka.links.EnumEntryDRIExtra"}}modifier-node-annotations/com.sonms.modifiernode.annotations/-invalidation-scope/-none/index.html
+$dokka.location:com.sonms.modifiernode.annotations/InvalidationScope.ParentData///PointingToDeclaration/{"org.jetbrains.dokka.links.EnumEntryDRIExtra":{"key":"org.jetbrains.dokka.links.EnumEntryDRIExtra"}}modifier-node-annotations/com.sonms.modifiernode.annotations/-invalidation-scope/-parent-data/index.html
+$dokka.location:com.sonms.modifiernode.annotations/InvalidationScope.Placement///PointingToDeclaration/{"org.jetbrains.dokka.links.EnumEntryDRIExtra":{"key":"org.jetbrains.dokka.links.EnumEntryDRIExtra"}}modifier-node-annotations/com.sonms.modifiernode.annotations/-invalidation-scope/-placement/index.html
+$dokka.location:com.sonms.modifiernode.annotations/InvalidationScope.Semantics///PointingToDeclaration/{"org.jetbrains.dokka.links.EnumEntryDRIExtra":{"key":"org.jetbrains.dokka.links.EnumEntryDRIExtra"}}modifier-node-annotations/com.sonms.modifiernode.annotations/-invalidation-scope/-semantics/index.html
+$dokka.location:com.sonms.modifiernode.annotations/InvalidationScope///PointingToDeclaration/modifier-node-annotations/com.sonms.modifiernode.annotations/-invalidation-scope/index.html
+$dokka.location:com.sonms.modifiernode.annotations/InvalidationScope/entries/#/PointingToDeclaration/modifier-node-annotations/com.sonms.modifiernode.annotations/-invalidation-scope/entries.html
+$dokka.location:com.sonms.modifiernode.annotations/InvalidationScope/valueOf/#kotlin.String/PointingToDeclaration/modifier-node-annotations/com.sonms.modifiernode.annotations/-invalidation-scope/value-of.html
+$dokka.location:com.sonms.modifiernode.annotations/InvalidationScope/values/#/PointingToDeclaration/modifier-node-annotations/com.sonms.modifiernode.annotations/-invalidation-scope/values.html
+$dokka.location:com.sonms.modifiernode.annotations/ModifierNodeFactory///PointingToDeclaration/modifier-node-annotations/com.sonms.modifiernode.annotations/-modifier-node-factory/index.html
+$dokka.location:com.sonms.modifiernode.annotations/ModifierNodeFactory/name/#/PointingToDeclaration/modifier-node-annotations/com.sonms.modifiernode.annotations/-modifier-node-factory/name.html
+$dokka.location:com.sonms.modifiernode.annotations/ModifierNodeFactory/visibility/#/PointingToDeclaration/modifier-node-annotations/com.sonms.modifiernode.annotations/-modifier-node-factory/visibility.html
+$dokka.location:com.sonms.modifiernode.annotations/OnChange///PointingToDeclaration/modifier-node-annotations/com.sonms.modifiernode.annotations/-on-change/index.html
+$dokka.location:com.sonms.modifiernode.annotations/SkipWhenFalse///PointingToDeclaration/modifier-node-annotations/com.sonms.modifiernode.annotations/-skip-when-false/index.html
+$dokka.location:com.sonms.modifiernode.annotations/SkipWhenTrue///PointingToDeclaration/modifier-node-annotations/com.sonms.modifiernode.annotations/-skip-when-true/index.html
+com.sonms.modifiernode.annotations
