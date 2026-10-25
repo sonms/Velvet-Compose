@@ -11,7 +11,7 @@ edge-to-edge 앱에서 상태바 / 내비게이션바 **아이콘 명암**을 �
 
 ## 미리보기
 
-| Auto (스크롤) | BarPaint.Sampled |
+| Auto (스크롤) | BarPaint: 투명 → Sampled → Solid (상태바 + 내비바) |
 |---|---|
 | <img src="../assets/systembars_auto_preview.gif" width="200"/> | <img src="../assets/systembars_paint_preview.gif" width="200"/> |
 
@@ -177,5 +177,6 @@ SystemBarsHost(
 ./gradlew :systembars:connectedDebugAndroidTest    # 샘플링 / 레지스트리 / 리컴포지션 / PixelCopy (실기기)
 ```
 
-`:app` 의 **SystemBars** 탭에서 스크롤 / 비교(modifier 없음) / 지정색 / Dialog / `SurfaceView` 데모를 볼 수 있다.
+`:app` 의 **SystemBars** 버튼에서 스크롤 / 비교(modifier 없음) / 지정색 / Dialog / `SurfaceView` / 바 칠하기 데모를 볼 수 있다.
+바 칠하기 화면은 투명 / 샘플 / 단색 칩과, 3버튼 내비바의 시스템 대비 스크림(흰 띠)을 끄고 켜는 `스크림 끄기` 칩이 있다(기본 꺼짐, `contrastEnforced = false`).
 adb 로 바로 진입: `--es sample SYSTEM_BARS --es bars_demo SCROLL --el interval 300`.

@@ -73,13 +73,18 @@ class MainActivity : ComponentActivity() {
             VelvetComposeTheme(darkTheme = false) {
                 if (selectedSample == SampleType.SYSTEM_BARS) {
                     // 바 뒤까지 그려야 하므로 Scaffold 의 innerPadding 밖에서 전체 화면으로 띄운다.
+                    var contrastEnforced by remember { mutableStateOf(true) }
                     SystemBarsHost(
-                        config = SystemBarsConfig(intervalMillis = intent.getLongExtra("interval", 300L)),
+                        config = SystemBarsConfig(
+                            intervalMillis = intent.getLongExtra("interval", 300L),
+                            contrastEnforced = contrastEnforced,
+                        ),
                     ) {
                         SystemBarsShowcase(
                             onBack = { selectedSample = SampleType.VERTICAL_TIME },
                             initialDemo = intent.getStringExtra("bars_demo"),
                             initialPaint = intent.getStringExtra("paint"),
+                            onContrastEnforcedChange = { contrastEnforced = it },
                         )
                     }
                     return@VelvetComposeTheme

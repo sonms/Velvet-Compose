@@ -26,6 +26,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -65,8 +66,17 @@ private val bandColors = listOf(
 )
 
 @Composable
-fun SystemBarsShowcase(onBack: () -> Unit, initialDemo: String? = null, initialPaint: String? = null) {
+fun SystemBarsShowcase(
+    onBack: () -> Unit,
+    initialDemo: String? = null,
+    initialPaint: String? = null,
+    /** 호스트의 `contrastEnforced` 를 바꾼다. 바 칠하기 화면은 시스템 대비 스크림을 꺼야 칠한 색이 그대로 보인다. */
+    onContrastEnforcedChange: (Boolean) -> Unit = {},
+) {
     var demo by remember { mutableStateOf(BarsDemo.entries.firstOrNull { it.name == initialDemo } ?: BarsDemo.SCROLL) }
+    var paintScrimOff by remember { mutableStateOf(true) }
+    // 바 칠하기 화면에서만(기본) 스크림을 끈다. 나머지 데모는 기본 동작(스크림 보정)을 그대로 본다.
+    SideEffect { onContrastEnforcedChange(!(demo == BarsDemo.PAINT && paintScrimOff)) }
 
     Box(Modifier.fillMaxSize()) {
         when (demo) {
@@ -76,7 +86,7 @@ fun SystemBarsShowcase(onBack: () -> Unit, initialDemo: String? = null, initialP
             BarsDemo.DIALOG -> DialogDemo()
             BarsDemo.SURFACE -> SurfaceDemo()
             BarsDemo.STACKED -> StackedDemo()
-            BarsDemo.PAINT -> PaintDemo(initialPaint)
+            BarsDemo.PAINT -> PaintDemo(initialPaint, paintScrimOff) { paintScrimOff = it }
         }
 
         // 컨트롤은 바 영역을 피해 안쪽에 둔다 (statusBarsPadding / navigationBarsPadding).
@@ -121,7 +131,7 @@ private fun ScrollDemo(sampled: Boolean, paint: BarPaint = BarPaint.None) {
 
 /** 바 영역 칠하기: 투명(기본) / 샘플 색 단색 / 지정 색 단색. 스크롤하면서 상태바·내비바 띠를 본다. */
 @Composable
-private fun PaintDemo(initialMode: String? = null) {
+private fun PaintDemo(initialMode: String? = null, scrimOff: Boolean, onScrimOffChange: (Boolean) -> Unit) {
     var mode by remember {
         mutableStateOf(when (initialMode) { "sampled" -> "샘플"; "solid" -> "단색"; else -> "투명" })
     }
@@ -137,6 +147,8 @@ private fun PaintDemo(initialMode: String? = null) {
             listOf("투명", "샘플", "단색").forEach { m ->
                 FilterChip(selected = mode == m, onClick = { mode = m }, label = { Text(m) })
             }
+            // 3버튼 내비바의 시스템 대비 스크림(흰 띠)을 끄고 켠다 — contrastEnforced
+            FilterChip(selected = scrimOff, onClick = { onScrimOffChange(!scrimOff) }, label = { Text("스크림 끄기") })
         }
     }
 }
