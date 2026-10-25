@@ -9,6 +9,12 @@ edge-to-edge 앱에서 상태바 / 내비게이션바 **아이콘 명암**을 �
 > **상태.** `0.1.0` (초기 공개 버전, API 는 아직 바뀔 수 있다). Android 전용, minSdk 24.
 > 설계 배경과 판단 근거는 [`ARCHITECTURE.md`](ARCHITECTURE.md) 참고.
 
+## 미리보기
+
+| Auto (스크롤) | BarPaint.Sampled |
+|---|---|
+| <video src="../assets/systembars_auto_preview.mp4" width="200"/> | <video src="../assets/systembars_paint_preview.mp4" width="200"/> |
+
 ## Setup
 
 ```kotlin

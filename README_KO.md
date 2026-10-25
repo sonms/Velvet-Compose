@@ -285,7 +285,7 @@ LaunchedEffect(Unit) {
 ## ⭐ RatingBar
 
 Jetpack Compose를 위한 고도로 커스터마이징 가능한 별점 바입니다.  
-스프링 애니메이션, 햅틱 피드백, 반개 지원, 커스텀 아이콘 슬롯 API를 제공합니다.
+스프링 애니메이션, 햅틱 피드백, 반개 지원, 커스텀 스타일 슬롯 API를 제공합니다.
 
 ### 📸 미리보기
 
@@ -377,6 +377,12 @@ RatingBar(
 화면마다 다른 배경 위에서 상태바/내비바 아이콘이 잘 보이도록 자동으로 맞춰 준다.
 `enableEdgeToEdge()` 는 바를 투명하게 만들 뿐, 아이콘 명암은 맞춰 주지 않는다.
 
+### 📸 미리보기
+
+| Auto (스크롤) | BarPaint.Sampled |
+|---|---|
+| <video src="assets/systembars_auto_preview.mp4" width="200"/> | <video src="assets/systembars_paint_preview.mp4" width="200"/> |
+
 ```kotlin
 // Activity: setContent 전에 enableEdgeToEdge()
 SystemBarsHost {
@@ -401,6 +407,10 @@ SystemBarsHost {
 > `Modifier.Node` 를 직접 작성하는 사람(라이브러리 저자 등)을 위한 도구다.
 > 1인 유지보수 · SLA 없음 · API 호환성 보장 없음.
 > 설계 배경: [`ARCHITECTURE.md`](ARCHITECTURE.md) · `composed` 와의 비교: [`COMPARISON.md`](modifier-node-sample/COMPARISON.md)
+
+### 📸 미리보기
+
+<video src="assets/modifier_node_preview.mp4" width="200"/>
 
 ### 설정
 

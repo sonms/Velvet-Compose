@@ -36,7 +36,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import com.sonms.ratingbar.RatingBar
+import com.sonms.ratingbar.model.StepSize
+import com.sonms.ratingbar.style.RatingBarDefaults
 import com.sonms.systembars.SystemBarsConfig
 import com.sonms.systembars.SystemBarsHost
 import com.sonms.velvetcompose.ui.theme.VelvetComposeTheme
@@ -134,9 +138,11 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun VelvetRatingBarSample() {
     var initRating by remember { mutableFloatStateOf(0f) }
+    var customRating by remember { mutableFloatStateOf(0f) }
 
-    Box(
-        contentAlignment = Alignment.Center,
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(48.dp, Alignment.CenterVertically),
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
@@ -147,6 +153,23 @@ fun VelvetRatingBarSample() {
             onRatingChanged = { rating ->
                 initRating = rating
             },
+        )
+        // 커스텀 스타일: 반개 단위, 큰 노란 별, 통통 튀는 스프링
+        RatingBar(
+            rating = customRating,
+            maxRating = 5,
+            stepSize = StepSize.HALF,
+            style = RatingBarDefaults.style(
+                filledColor = Color(0xFFFFC107),
+                emptyColor = Color(0xFFE0E0E0),
+                itemSize = 44.dp,
+                itemSpacing = 6.dp,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessLow,
+                ),
+            ),
+            onRatingChanged = { customRating = it },
         )
     }
 }
